@@ -1,0 +1,4 @@
+../Core/Src/main.c:16:5:main	280	static
+../Core/Src/main.c:46:6:SensorConfiguration	48	static
+../Core/Src/main.c:65:6:SystemClock_Config	88	static
+../Core/Src/main.c:101:6:Error_Handler	4	static,ignoring_inline_asm

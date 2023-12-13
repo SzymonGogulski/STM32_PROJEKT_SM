@@ -1,0 +1,8 @@
+../Core/Src/BMP280_STM32.c:49:6:TrimRead	1
+../Core/Src/BMP280_STM32.c:98:5:BMP280_Config	8
+../Core/Src/BMP280_STM32.c:161:5:BMPReadRaw	2
+../Core/Src/BMP280_STM32.c:189:6:BMP280_WakeUP	1
+../Core/Src/BMP280_STM32.c:211:9:BMP280_compensate_T_int32	1
+../Core/Src/BMP280_STM32.c:226:10:BMP280_compensate_P_int64	2
+../Core/Src/BMP280_STM32.c:282:10:BMP280_compensate_H_int32	1
+../Core/Src/BMP280_STM32.c:303:6:BMP280_Measure	5
