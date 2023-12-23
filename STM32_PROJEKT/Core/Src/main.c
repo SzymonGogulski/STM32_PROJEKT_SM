@@ -8,26 +8,35 @@
 #include <stdio.h>
 #include "BMP280_STM32.h"
 
+// DEKLARACJE FUNKCJI
 void SystemClock_Config(void);
 void SensorConfiguration(void);
+void MX_TIM_Init(void);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 
+// ZMIENNE GLOBALNE
+extern TIM_HandleTypeDef htim4;
 float Temperature, Pressure, Humidity;
 
 int main(void)
 {
+	// Inicjalizacja peryferiów
 	HAL_Init();
 	SystemClock_Config();
 	MX_GPIO_Init();
 	MX_USART3_UART_Init();
-	MX_TIM4_Init();
 	MX_I2C1_Init();
 
+	// Konfiguracja czujnika
 	SensorConfiguration();
 
+	// Inicjalizacja tim4
+	MX_TIM_Init();
 	HAL_TIM_Base_Start_IT(&htim4);
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 
-	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
+	// Wypełnienie PWM 1000/10000*100% = 10%
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 1000);
 
 	while (1)
 	{
@@ -43,13 +52,64 @@ int main(void)
 	}
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+
+	if(htim->Instance == TIM4){
+
+	}
+}
+
+// Redefinicja funkcji bibliotecznej MX_TIM4_Init()
+// Okres PWM = 500ms
+void MX_TIM_Init(void){
+	  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	  TIM_MasterConfigTypeDef sMasterConfig = {0};
+	  TIM_OC_InitTypeDef sConfigOC = {0};
+
+	  htim4.Instance = TIM4;
+	  htim4.Init.Prescaler = 3599;
+	  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+	  htim4.Init.Period = 9999;
+	  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+	  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+	  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+	  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+	  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	  sConfigOC.Pulse = 500;
+	  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+	  {
+	    Error_Handler();
+	  }
+
+	  HAL_TIM_MspPostInit(&htim4);
+}
+
 void SensorConfiguration(void){
 
 	// Konfiguracja
 	int ret = BMP280_Config(OSRS_16, OSRS_16, OSRS_OFF, MODE_NORMAL, T_SB_1000, IIR_16);
 
 	// Wiadomosc do terminala
-	HAL_Delay(500);
+	HAL_Delay(100);
 	char msg[] = "Start up. \r\n";
 	HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	if (ret>=0){
