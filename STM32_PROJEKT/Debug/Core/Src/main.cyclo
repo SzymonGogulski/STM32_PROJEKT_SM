@@ -1,6 +1,8 @@
-../Core/Src/main.c:20:5:main	1
-../Core/Src/main.c:54:6:HAL_TIM_PeriodElapsedCallback	1
-../Core/Src/main.c:63:6:MX_TIM_Init	6
-../Core/Src/main.c:105:6:SensorConfiguration	2
-../Core/Src/main.c:124:6:SystemClock_Config	3
-../Core/Src/main.c:160:6:Error_Handler	1
+../Core/Src/main.c:36:5:main	1
+../Core/Src/main.c:71:6:HAL_TIM_PeriodElapsedCallback	1
+../Core/Src/main.c:83:6:HAL_UART_RxCpltCallback	2
+../Core/Src/main.c:101:6:SendMessage	2
+../Core/Src/main.c:109:6:MX_TIM_Init	6
+../Core/Src/main.c:153:6:SensorConfiguration	2
+../Core/Src/main.c:172:6:SystemClock_Config	3
+../Core/Src/main.c:208:6:Error_Handler	1

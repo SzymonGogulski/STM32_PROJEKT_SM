@@ -1,22 +1,37 @@
+// STM32 libs
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "math.h"
+// STD libs
 #include <string.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+// USER libs
 #include "BMP280_STM32.h"
+
 
 // DEKLARACJE FUNKCJI
 void SystemClock_Config(void);
 void SensorConfiguration(void);
 void MX_TIM_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+void SendMessage(const char *message);
 
 // ZMIENNE GLOBALNE
 extern TIM_HandleTypeDef htim4;
 float Temperature, Pressure, Humidity;
+float Tref = 0.0f;
+
+// ZMIENNE DO OBSLUGI UART
+char result[20];
+char rx_Buffer[20] = "00000000000000000000";
+uint8_t rx_Received;
+uint8_t rx_Index = 0;
 
 int main(void)
 {
@@ -38,69 +53,101 @@ int main(void)
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 1000);
 
+	// Zadawanie Tref przez UART
+	HAL_UART_Receive_IT(&huart3, &rx_Received, 1);
+
 	while (1)
 	{
 		// Pomiar
 		BMP280_Measure();
 
-		// Wiadomosc do terminala
-		HAL_Delay(500);
-		char data[255] = "";
-		sprintf(data, "Pressure: %2.1f Temperature %2.1f C \r\n", (float)Pressure, (float)Temperature);
-		HAL_UART_Transmit(&huart3, (uint8_t*)data, strlen(data), HAL_MAX_DELAY);
-		HAL_Delay(100);
+		// Wyślij pomiar do terminala
+		sprintf(result, "%2.1f;\r\n", (float)Temperature);
+		SendMessage(result);
+		HAL_Delay(1000);
 	}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+	// Przerwanie zegara
+	// Tutaj dodaj:
+	// 1) POMIAR
+	// 2) WYSLANIE POMIARU
+	// 4) ALGORYM REGULACJI PID
 
 	if(htim->Instance == TIM4){
 
 	}
 }
 
-// Redefinicja funkcji bibliotecznej MX_TIM4_Init()
-// Okres PWM = 500ms
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	// Odbieranie nastaw przez UART
+	if(rx_Received == ';'){
+		char ext[rx_Index];
+		strncpy(ext, rx_Buffer, rx_Index);
+		Tref = atof(ext);
+
+		rx_Index = 0;
+		memset(rx_Buffer, '0', sizeof(rx_Buffer));
+		rx_Received = 0;
+	}
+	else{
+		rx_Buffer[rx_Index] = (char)rx_Received;
+		rx_Index++;
+	}
+	HAL_UART_Receive_IT(&huart3, (uint8_t *)&rx_Received, 1);
+}
+
+void SendMessage(const char *message){
+	// Wysyłanie wiadomości do UART
+
+	if (HAL_UART_Transmit_IT(&huart3, (uint8_t*)message, strlen(message)) != HAL_OK) {
+		Error_Handler();
+	}
+}
+
 void MX_TIM_Init(void){
-	  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-	  TIM_MasterConfigTypeDef sMasterConfig = {0};
-	  TIM_OC_InitTypeDef sConfigOC = {0};
+	// Redefinicja funkcji bibliotecznej MX_TIM4_Init(); Okres PWM = 500ms
 
-	  htim4.Instance = TIM4;
-	  htim4.Init.Prescaler = 3599;
-	  htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
-	  htim4.Init.Period = 9999;
-	  htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-	  htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-	  if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
-	  {
-	    Error_Handler();
-	  }
-	  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-	  if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
-	  {
-	    Error_Handler();
-	  }
-	  if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
-	  {
-	    Error_Handler();
-	  }
-	  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-	  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-	  if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
-	  {
-	    Error_Handler();
-	  }
-	  sConfigOC.OCMode = TIM_OCMODE_PWM1;
-	  sConfigOC.Pulse = 500;
-	  sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-	  sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
-	  if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
-	  {
-	    Error_Handler();
-	  }
+	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+	TIM_MasterConfigTypeDef sMasterConfig = {0};
+	TIM_OC_InitTypeDef sConfigOC = {0};
 
-	  HAL_TIM_MspPostInit(&htim4);
+	htim4.Instance = TIM4;
+	htim4.Init.Prescaler = 3599;
+	htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+	htim4.Init.Period = 9999;
+	htim4.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+	htim4.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+	if (HAL_TIM_Base_Init(&htim4) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+	if (HAL_TIM_ConfigClockSource(&htim4, &sClockSourceConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	if (HAL_TIM_PWM_Init(&htim4) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+	sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+	if (HAL_TIMEx_MasterConfigSynchronization(&htim4, &sMasterConfig) != HAL_OK)
+	{
+		Error_Handler();
+	}
+	sConfigOC.OCMode = TIM_OCMODE_PWM1;
+	sConfigOC.Pulse = 500;
+	sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
+	sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
+	if (HAL_TIM_PWM_ConfigChannel(&htim4, &sConfigOC, TIM_CHANNEL_1) != HAL_OK)
+	{
+		Error_Handler();
+	}
+
+	HAL_TIM_MspPostInit(&htim4);
 }
 
 void SensorConfiguration(void){
