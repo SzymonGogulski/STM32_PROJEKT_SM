@@ -56,16 +56,7 @@ int main(void)
 	// Zadawanie Tref przez UART
 	HAL_UART_Receive_IT(&huart3, &rx_Received, 1);
 
-	while (1)
-	{
-		// Pomiar
-		BMP280_Measure();
-
-		// Wyślij pomiar do terminala
-		sprintf(result, "%2.1f;\r\n", (float)Temperature);
-		SendMessage(result);
-		HAL_Delay(1000);
-	}
+	while(1){}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
@@ -76,7 +67,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	// 4) ALGORYM REGULACJI PID
 
 	if(htim->Instance == TIM4){
+		// Pomiar
+		BMP280_Measure();
 
+		// Wyślij pomiar do terminala
+		sprintf(result, "%2.1f;\r\n", (float)Temperature);
+		SendMessage(result);
 	}
 }
 
