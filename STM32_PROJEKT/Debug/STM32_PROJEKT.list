@@ -2995,7 +2995,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
  80020a2:	f7ff fd8d 	bl	8001bc0 <BMP280_Measure>
 
 		// Wyślij pomiar do terminala
-		sprintf(result, "%2.1f;\r\n", (float)Temperature);
+		sprintf(result, "%2.2f;\r\n", (float)Temperature);
  80020a6:	4b0a      	ldr	r3, [pc, #40]	; (80020d0 <HAL_TIM_PeriodElapsedCallback+0x40>)
  80020a8:	681b      	ldr	r3, [r3, #0]
  80020aa:	4618      	mov	r0, r3

@@ -71,7 +71,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		BMP280_Measure();
 
 		// Wyślij pomiar do terminala
-		sprintf(result, "%2.1f;\r\n", (float)Temperature);
+		sprintf(result, "%2.2f;\r\n", (float)Temperature);
 		SendMessage(result);
 	}
 }
