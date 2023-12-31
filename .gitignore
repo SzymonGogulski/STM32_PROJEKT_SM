@@ -1,3 +1,6 @@
 
 materialy/
 github_repos/
+
+.venv/
+__pycache__/
