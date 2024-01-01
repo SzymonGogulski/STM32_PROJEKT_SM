@@ -7,7 +7,10 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
+pandas = "^2.1.4"
+matplotlib = "^3.8.2"
 pyserial = "^3.5"
+control = "^0.9.4"
 
 
 [build-system]

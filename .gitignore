@@ -1,6 +1,7 @@
 
 materialy/
 github_repos/
-
+slprj/
 .venv/
 __pycache__/
+*.slxc
