@@ -5,6 +5,7 @@
 #include "usart.h"
 #include "gpio.h"
 #include "math.h"
+#include "arm_math.h"
 // STD libs
 #include <string.h>
 #include <stdint.h>
@@ -25,13 +26,22 @@ void SendMessage(const char *message);
 // ZMIENNE GLOBALNE
 extern TIM_HandleTypeDef htim4;
 float Temperature, Pressure, Humidity;
-float Tref = 0.0f;
+float Tref = 25.0f; //temperatura zadana
 
 // ZMIENNE DO OBSLUGI UART
 char result[20];
 char rx_Buffer[20] = "00000000000000000000";
 uint8_t rx_Received;
 uint8_t rx_Index = 0;
+
+// ZMIENNE REGULATORA PID
+float Kp = 1.0f;
+float Ki = 0.0f;
+float Kd = 0.0f;
+arm_pid_instance_f32 PID;
+float error = 0.0;
+float U = 0.0;
+int set_comp = 0;
 
 int main(void)
 {
@@ -49,9 +59,15 @@ int main(void)
 	MX_TIM_Init();
 	HAL_TIM_Base_Start_IT(&htim4);
 
-	// Wypełnienie PWM 1000/10000*100% = 10%
+	// Inicjalizacja regulatora PID
+	PID.Kp = Kp;
+	PID.Ki = Ki;
+	PID.Kd = Kd;
+	arm_pid_init_f32(&PID, 1);
+
+	// Inicjalizacja PWM
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 1000);
+	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
 
 	// Zadawanie Tref przez UART
 	HAL_UART_Receive_IT(&huart3, &rx_Received, 1);
@@ -73,6 +89,19 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		// Wyślij pomiar do terminala
 		sprintf(result, "%2.2f;\r\n", (float)Temperature);
 		SendMessage(result);
+
+		// Zamknięty układ regulacji z regulatorem PID
+		//Uchyb regulacji
+		error = Tref - Temperature;
+		// sygnał sterujący z regulatora
+		U = arm_pid_f32(&PID, error);
+		// Saturacja sygnału U
+		U = (U <= 1.0) ? U : 1.0;
+		U = (U >= 0.0) ? U : 0.0;
+		// Przeliczenie U na set_compare
+		set_comp = U * (htim4.Init.Period + 1);
+		// Zadanie wypełnienia PWM
+		__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, set_comp);
 	}
 }
 
@@ -81,7 +110,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	if(rx_Received == ';'){
 		char ext[rx_Index];
 		strncpy(ext, rx_Buffer, rx_Index);
-		Tref = atof(ext);
+		float temp = atof(ext);
+
+		Tref = (temp>=25.0 && temp<=75.0)? temp : Tref;
 
 		rx_Index = 0;
 		memset(rx_Buffer, '0', sizeof(rx_Buffer));
