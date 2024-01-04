@@ -69,13 +69,17 @@ namespace GUI
             string dataIn = sp.ReadLine().Replace(";", string.Empty);
             double temperature;
 
-            // wyświetlanie aktualnej temperatury
-            lblCurrentTemperature.Text = dataIn;
-
-            if (double.TryParse(dataIn, out temperature))
+            // przeniesienie aktualizacji interfejsu użytkownika na wątek UI
+            this.Invoke((MethodInvoker)delegate
             {
-                UpdateChart(temperature);
-            }
+                // wyświetlanie aktualnej temperatury
+                lblCurrentTemperature.Text = dataIn;
+
+                if (double.TryParse(dataIn, out temperature))
+                {
+                    UpdateChart(temperature);
+                }
+            });
         }
 
         // aktualizacja wykresu
