@@ -14,6 +14,7 @@ namespace GUI
 {
     public partial class Form1 : Form
     {
+        double setpointTemperature;
         public Form1()
         {
             InitializeComponent();
@@ -67,34 +68,61 @@ namespace GUI
             string dataIn = sp.ReadLine().TrimEnd(';');
             double temperature;
 
-            // Wyświetlanie aktualnej temperatury
+            // wyświetlanie aktualnej temperatury
             lblCurrentTemperature.Text = dataIn;
 
-            // Aktualizacja wykresu
             if (double.TryParse(dataIn, out temperature))
             {
                 UpdateChart(temperature);
             }
         }
 
+        // aktualizacja wykresu
         private void UpdateChart(double temperature)
         {
             this.Invoke((MethodInvoker)delegate
             {
-                // Temperatura odczytana
+                // temperatura odczytana
                 chart1.Series[0].Points.AddY(temperature);
-                // Temperatura zadana
-                chart1.Series[1].Points.AddY(55.0);
+                // temperatura zadana
+                chart1.Series[1].Points.AddY(setpointTemperature);
 
             });
         }
 
+        // ustawianie temperatury zadanej
         private void btnSetTemperature_Click(object sender, EventArgs e)
         {
+            if (serialPort1.IsOpen)
+            {
+                if (cBoxSetpointTemperature.Text == "")
+                {
+                    MessageBox.Show("Pole nie może być puste. Wprowadź wartość temperatury.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else { 
+                    setpointTemperature = Convert.ToDouble(cBoxSetpointTemperature.Text.Replace('.', ','));
+                    string temperatureToSet = string.Format("setTemperature:{0:F2};", setpointTemperature).Replace(',', '.');
+                    serialPort1.WriteLine(temperatureToSet);
+                }
+
+            }
         }
 
+        // ustawianie parametrów regulatora
         private void btnSetPidSettings_Click(object sender, EventArgs e)
         {
+            if (serialPort1.IsOpen)
+            {
+                if (cBoxKp.Text == "" && cBoxKi.Text == "" && cBoxKd.Text == "")
+                {
+                    MessageBox.Show("Pola nie mogą być puste. Wprowadź wszystkie wartość nastaw regulatora PID.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                else 
+                {
+                    string pidSettings = string.Format("kp:{0:F2};ki:{1:F2};kd:{2:F2};", Convert.ToDouble(cBoxKp.Text.Replace('.', ',')), Convert.ToDouble(cBoxKi.Text.Replace('.', ',')), Convert.ToDouble(cBoxKd.Text.Replace('.', ','))).Replace(',', '.');
+                    serialPort1.WriteLine(pidSettings);
+                }
+            }
         }
     }
 }
