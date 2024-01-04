@@ -66,7 +66,7 @@ namespace GUI
         private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort sp = (SerialPort)sender;
-            string dataIn = sp.ReadLine().TrimEnd(';');
+            string dataIn = sp.ReadLine().Replace(";", string.Empty);
             double temperature;
 
             // wyświetlanie aktualnej temperatury
