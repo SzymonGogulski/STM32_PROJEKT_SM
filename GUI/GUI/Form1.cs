@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -75,9 +75,14 @@ namespace GUI
                 // wyświetlanie aktualnej temperatury
                 lblCurrentTemperature.Text = dataIn;
 
-                if (double.TryParse(dataIn, out temperature))
+                if (double.TryParse(dataIn.Replace('.', ','), out temperature))
                 {
                     UpdateChart(temperature);
+                }
+                else
+                {
+                    MessageBox.Show("Błąd aktualizowania wykresu!", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                 }
             });
         }
