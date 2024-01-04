@@ -8,15 +8,16 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace GUI
 {
     public partial class Form1 : Form
     {
-        string dataOUT;
         public Form1()
         {
             InitializeComponent();
+            serialPort1.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -60,15 +61,40 @@ namespace GUI
             }
         }
 
-        //private void btnSendData_Click(object sender, EventArgs e)
-        //{
-        //    if (serialPort1.IsOpen)
-        //    {
-        //        //dataOUT = tBoxDataOut.Text;
-        //        //serialPort1.WriteLine(dataOUT);
-        //        serialPort1.Write(dataOUT);
+        private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort sp = (SerialPort)sender;
+            string dataIn = sp.ReadLine().TrimEnd(';');
+            double temperature;
 
-        //    }
-        //}
+            // Wyświetlanie aktualnej temperatury
+            lblCurrentTemperature.Text = dataIn;
+
+            // Aktualizacja wykresu
+            if (double.TryParse(dataIn, out temperature))
+            {
+                UpdateChart(temperature);
+            }
+        }
+
+        private void UpdateChart(double temperature)
+        {
+            this.Invoke((MethodInvoker)delegate
+            {
+                // Temperatura odczytana
+                chart1.Series[0].Points.AddY(temperature);
+                // Temperatura zadana
+                chart1.Series[1].Points.AddY(55.0);
+
+            });
+        }
+
+        private void btnSetTemperature_Click(object sender, EventArgs e)
+        {
+        }
+
+        private void btnSetPidSettings_Click(object sender, EventArgs e)
+        {
+        }
     }
 }

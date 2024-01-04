@@ -33,7 +33,6 @@
             System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
             System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.DataPoint dataPoint2 = new System.Windows.Forms.DataVisualization.Charting.DataPoint(0D, 40D);
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.btnDisconnect = new System.Windows.Forms.Button();
@@ -66,11 +65,11 @@
             this.label10 = new System.Windows.Forms.Label();
             this.chart1 = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnSetTemperature = new System.Windows.Forms.Button();
             this.cBoxSetpointTemperature = new System.Windows.Forms.TextBox();
             this.label15 = new System.Windows.Forms.Label();
             this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this.label16 = new System.Windows.Forms.Label();
+            this.lblCurrentTemperature = new System.Windows.Forms.Label();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -258,6 +257,7 @@
             this.btnSetPidSettings.TabIndex = 6;
             this.btnSetPidSettings.Text = "Set PID settings";
             this.btnSetPidSettings.UseVisualStyleBackColor = true;
+            this.btnSetPidSettings.Click += new System.EventHandler(this.btnSetPidSettings_Click);
             // 
             // cBoxKd
             // 
@@ -384,18 +384,23 @@
             chartArea2.Name = "ChartArea1";
             this.chart1.ChartAreas.Add(chartArea2);
             legend2.Name = "Legend1";
+            legend2.Position.Auto = false;
+            legend2.Position.Height = 8.303249F;
+            legend2.Position.Width = 22.05714F;
+            legend2.Position.X = 74.94286F;
             this.chart1.Legends.Add(legend2);
             this.chart1.Location = new System.Drawing.Point(6, 20);
             this.chart1.Name = "chart1";
+            series3.BorderWidth = 2;
             series3.ChartArea = "ChartArea1";
             series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series3.Legend = "Legend1";
-            series3.Name = "Series1";
+            series3.Name = "Temperatura aktualna";
+            series4.BorderWidth = 2;
             series4.ChartArea = "ChartArea1";
             series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             series4.Legend = "Legend1";
-            series4.Name = "Series2";
-            series4.Points.Add(dataPoint2);
+            series4.Name = "Temperatura zadana";
             this.chart1.Series.Add(series3);
             this.chart1.Series.Add(series4);
             this.chart1.Size = new System.Drawing.Size(876, 555);
@@ -404,7 +409,7 @@
             // 
             // groupBox4
             // 
-            this.groupBox4.Controls.Add(this.button1);
+            this.groupBox4.Controls.Add(this.btnSetTemperature);
             this.groupBox4.Controls.Add(this.cBoxSetpointTemperature);
             this.groupBox4.Controls.Add(this.label15);
             this.groupBox4.Location = new System.Drawing.Point(13, 480);
@@ -414,14 +419,15 @@
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "Setpoint";
             // 
-            // button1
+            // btnSetTemperature
             // 
-            this.button1.Location = new System.Drawing.Point(22, 61);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(122, 33);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "Set temperature";
-            this.button1.UseVisualStyleBackColor = true;
+            this.btnSetTemperature.Location = new System.Drawing.Point(22, 61);
+            this.btnSetTemperature.Name = "btnSetTemperature";
+            this.btnSetTemperature.Size = new System.Drawing.Size(122, 33);
+            this.btnSetTemperature.TabIndex = 7;
+            this.btnSetTemperature.Text = "Set temperature";
+            this.btnSetTemperature.UseVisualStyleBackColor = true;
+            this.btnSetTemperature.Click += new System.EventHandler(this.btnSetTemperature_Click);
             // 
             // cBoxSetpointTemperature
             // 
@@ -441,7 +447,7 @@
             // 
             // groupBox5
             // 
-            this.groupBox5.Controls.Add(this.label16);
+            this.groupBox5.Controls.Add(this.lblCurrentTemperature);
             this.groupBox5.Location = new System.Drawing.Point(177, 480);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(107, 114);
@@ -449,15 +455,15 @@
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Current temperature value";
             // 
-            // label16
+            // lblCurrentTemperature
             // 
-            this.label16.AutoSize = true;
-            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.label16.Location = new System.Drawing.Point(34, 66);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(27, 20);
-            this.label16.TabIndex = 13;
-            this.label16.Text = "35";
+            this.lblCurrentTemperature.AutoSize = true;
+            this.lblCurrentTemperature.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.lblCurrentTemperature.Location = new System.Drawing.Point(34, 66);
+            this.lblCurrentTemperature.Name = "lblCurrentTemperature";
+            this.lblCurrentTemperature.Size = new System.Drawing.Size(27, 20);
+            this.lblCurrentTemperature.TabIndex = 13;
+            this.lblCurrentTemperature.Text = "35";
             // 
             // groupBox6
             // 
@@ -535,9 +541,9 @@
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.TextBox cBoxSetpointTemperature;
         private System.Windows.Forms.Label label15;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button btnSetTemperature;
         private System.Windows.Forms.GroupBox groupBox5;
-        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Label lblCurrentTemperature;
         private System.Windows.Forms.GroupBox groupBox6;
     }
 }
