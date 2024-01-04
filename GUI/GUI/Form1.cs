@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
 using System.Windows.Forms.DataVisualization.Charting;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GUI
 {
@@ -99,10 +100,22 @@ namespace GUI
                 {
                     MessageBox.Show("Pole nie może być puste. Wprowadź wartość temperatury.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                else { 
+                else 
+                { 
                     setpointTemperature = Convert.ToDouble(cBoxSetpointTemperature.Text.Replace('.', ','));
-                    string temperatureToSet = string.Format("setTemperature:{0:F2};", setpointTemperature).Replace(',', '.');
-                    serialPort1.WriteLine(temperatureToSet);
+                    
+                    if (setpointTemperature < 0.0 || setpointTemperature > 75.0)
+                    {
+                        MessageBox.Show("Wprowadź liczbę z zakresu od 0 do 75.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        cBoxSetpointTemperature.Text = "0.0";
+                    }
+                    else
+                    {
+                        string temperatureToSet = string.Format("{{setTemperature:{0:F2} }}", setpointTemperature).Replace(',', '.').Replace(" ", string.Empty);
+                        serialPort1.WriteLine(temperatureToSet);
+                        Console.WriteLine(temperatureToSet);
+                    }
+
                 }
 
             }
@@ -113,14 +126,16 @@ namespace GUI
         {
             if (serialPort1.IsOpen)
             {
-                if (cBoxKp.Text == "" && cBoxKi.Text == "" && cBoxKd.Text == "")
+                if (cBoxKp.Text == "" || cBoxKi.Text == "" || cBoxKd.Text == "")
                 {
-                    MessageBox.Show("Pola nie mogą być puste. Wprowadź wszystkie wartość nastaw regulatora PID.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Pola nie mogą być puste. Wprowadź wszystkie wartości nastaw regulatora PID.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 else 
                 {
-                    string pidSettings = string.Format("kp:{0:F2};ki:{1:F2};kd:{2:F2};", Convert.ToDouble(cBoxKp.Text.Replace('.', ',')), Convert.ToDouble(cBoxKi.Text.Replace('.', ',')), Convert.ToDouble(cBoxKd.Text.Replace('.', ','))).Replace(',', '.');
+                    string pidSettings = string.Format("{{kp:{0:F2};ki:{1:F2};kd:{2:F2} }}", Convert.ToDouble(cBoxKp.Text.Replace('.', ',')), Convert.ToDouble(cBoxKi.Text.Replace('.', ',')), Convert.ToDouble(cBoxKd.Text.Replace('.', ','))).Replace(',', '.').Replace(';', ',').Replace(" ", string.Empty);
                     serialPort1.WriteLine(pidSettings);
+                    Console.WriteLine(pidSettings.Trim());
+
                 }
             }
         }
