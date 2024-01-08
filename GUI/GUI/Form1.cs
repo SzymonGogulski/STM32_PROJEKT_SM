@@ -66,18 +66,21 @@ namespace GUI
         private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort sp = (SerialPort)sender;
-            string dataIn = sp.ReadLine().Replace(";", string.Empty);
-            double temperature;
+            string[] dataIn = sp.ReadLine().Replace(";", string.Empty).Split(',');
+            double temp, tempRef;
+            int U;
 
             // przeniesienie aktualizacji interfejsu użytkownika na wątek UI
             this.Invoke((MethodInvoker)delegate
             {
                 // wyświetlanie aktualnej temperatury
-                lblCurrentTemperature.Text = dataIn;
+                lblCurrentTemperature.Text = dataIn[0];
 
-                if (double.TryParse(dataIn.Replace('.', ','), out temperature))
+                if (double.TryParse(dataIn[0].Replace('.', ','), out temp) &&
+                    double.TryParse(dataIn[1].Replace('.', ','), out tempRef) &&
+                    int.TryParse(dataIn[2].Replace('.', ','), out U))
                 {
-                    UpdateChart(temperature);
+                    UpdateChart(temp, tempRef, U);
                 }
                 else
                 {
@@ -88,14 +91,16 @@ namespace GUI
         }
 
         // aktualizacja wykresu
-        private void UpdateChart(double temperature)
+        private void UpdateChart(double temperature, double refTemperature, int U)
         {
             this.Invoke((MethodInvoker)delegate
             {
                 // temperatura odczytana
                 chart1.Series[0].Points.AddY(temperature);
                 // temperatura zadana
-                chart1.Series[1].Points.AddY(setpointTemperature);
+                chart1.Series[1].Points.AddY(refTemperature);
+                // sygnał sterujący
+                chart1.Series[2].Points.AddY(U);
 
             });
         }
