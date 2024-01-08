@@ -113,14 +113,14 @@ namespace GUI
                 { 
                     setpointTemperature = Convert.ToDouble(cBoxSetpointTemperature.Text.Replace('.', ','));
                     
-                    if (setpointTemperature < 0.0 || setpointTemperature > 75.0)
+                    if (setpointTemperature < 25.0 || setpointTemperature > 75.0)
                     {
-                        MessageBox.Show("Wprowadź liczbę z zakresu od 0 do 75.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Wprowadź liczbę z zakresu od 25 do 75.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         cBoxSetpointTemperature.Text = "0.0";
                     }
                     else
                     {
-                        string temperatureToSet = string.Format("{{setTemperature:{0:F2} }}", setpointTemperature).Replace(',', '.').Replace(" ", string.Empty);
+                        string temperatureToSet = string.Format("t{0:F2};", setpointTemperature).Replace(',', '.');
                         serialPort1.WriteLine(temperatureToSet);
                         Console.WriteLine(temperatureToSet);
                     }
@@ -141,9 +141,15 @@ namespace GUI
                 }
                 else 
                 {
-                    string pidSettings = string.Format("{{kp:{0:F2};ki:{1:F2};kd:{2:F2} }}", Convert.ToDouble(cBoxKp.Text.Replace('.', ',')), Convert.ToDouble(cBoxKi.Text.Replace('.', ',')), Convert.ToDouble(cBoxKd.Text.Replace('.', ','))).Replace(',', '.').Replace(';', ',').Replace(" ", string.Empty);
+                    string kp = cBoxKp.Text.Replace('.', ',');
+                    string ki = cBoxKi.Text.Replace('.', ',');
+                    string kd = cBoxKd.Text.Replace('.', ',');
+                    string pidSettings = string.Format("p{0:F4}:{1:F4}:{2:F4};", Convert.ToDouble(kp), Convert.ToDouble(ki), Convert.ToDouble(kd)).Replace(',', '.').Replace(':', ',');
                     serialPort1.WriteLine(pidSettings);
                     Console.WriteLine(pidSettings.Trim());
+                    txtKp.Text = string.Format("{0:F4}", Convert.ToDouble(kp));
+                    txtKi.Text = string.Format("{0:F4}", Convert.ToDouble(ki));
+                    txtKd.Text = string.Format("{0:F4}", Convert.ToDouble(kd));
 
                 }
             }
