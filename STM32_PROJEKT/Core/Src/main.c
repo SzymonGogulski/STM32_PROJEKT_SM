@@ -4,6 +4,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "dma.h"
 #include "math.h"
 #include "arm_math.h"
 // STD libs
@@ -14,27 +15,33 @@
 // USER libs
 #include "BMP280_STM32.h"
 
-
-// DEKLARACJE FUNKCJI
+// FUNKCJE SYSTEMOWE
 void SystemClock_Config(void);
+
+// OBSLUGA CZUJNIKA
 void SensorConfiguration(void);
+
+// FUNKCJE I ZMIENNE ZEGAROWE
+extern TIM_HandleTypeDef htim4;
 void MX_TIM_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart);
-void SendMessage(const char *message);
 
-// ZMIENNE GLOBALNE
-extern TIM_HandleTypeDef htim4;
+// ZMIENNE I FUNKCJE DO TRANSMISJI DANYCH
+void SendMessage(const char *message);
+#define SendBuffer_SIZE 20
+char SendBuffer[SendBuffer_SIZE];
+
+// ZMIENNE I FUNKCJE ODBIERANIA DANYCH I ICH PRZETWARZANIA
+#define ReceiveBuffer_SIZE 64
+#define MainBuffer_SIZE 64
+uint8_t ReceiveBuffer[ReceiveBuffer_SIZE];
+uint8_t MainBuffer[MainBuffer_SIZE];
+int ProcessDataFlag = 0;
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size);
+
+// POMIARY, NASTAWY I ZMIENNE REGULATORA
 float Temperature, Pressure, Humidity;
 float Tref = 25.0f; //temperatura zadana
-
-// ZMIENNE DO OBSLUGI UART
-char result[20];
-char rx_Buffer[20] = "00000000000000000000";
-uint8_t rx_Received;
-uint8_t rx_Index = 0;
-
-// ZMIENNE REGULATORA PID
 float Kp = 1.0f;
 float Ki = 0.0f;
 float Kd = 0.0f;
@@ -49,6 +56,7 @@ int main(void)
 	HAL_Init();
 	SystemClock_Config();
 	MX_GPIO_Init();
+	MX_DMA_Init();
 	MX_USART3_UART_Init();
 	MX_I2C1_Init();
 
@@ -59,36 +67,51 @@ int main(void)
 	MX_TIM_Init();
 	HAL_TIM_Base_Start_IT(&htim4);
 
+	// Inicjalizacja PWM
+	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
+	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
+
 	// Inicjalizacja regulatora PID
 	PID.Kp = Kp;
 	PID.Ki = Ki;
 	PID.Kd = Kd;
 	arm_pid_init_f32(&PID, 1);
 
-	// Inicjalizacja PWM
-	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
-
-	// Zadawanie Tref przez UART
-	HAL_UART_Receive_IT(&huart3, &rx_Received, 1);
+	// Odbieranie nastaw z GUI
+	HAL_UARTEx_ReceiveToIdle_DMA(&huart3, ReceiveBuffer, ReceiveBuffer_SIZE);
 
 	while(1){}
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	// Przerwanie zegara
-	// Tutaj dodaj:
+	// 1) PRZETWORZENIE DANYCH UART
 	// 1) POMIAR
 	// 2) WYSLANIE POMIARU
 	// 4) ALGORYM REGULACJI PID
 
 	if(htim->Instance == TIM4){
+
+		//Processing danych
+		if(ProcessDataFlag == 1){
+
+			// tfloat;
+			if (MainBuffer[0] == 't') {
+				sscanf((char*)&MainBuffer[1], "%f;", &Tref);
+			}
+			// pfloat,float,float;
+			else if (MainBuffer[0] == 'p') {
+				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &Kp, &Ki, &Kd);
+			}
+			ProcessDataFlag = 0;
+		}
+
 		// Pomiar
 		BMP280_Measure();
 
 		// Wyślij pomiar do terminala
-		sprintf(result, "%2.2f;\r\n", (float)Temperature);
-		SendMessage(result);
+		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, Tref, (int)(U*100.0));
+		SendMessage(SendBuffer);
 
 		// Zamknięty układ regulacji z regulatorem PID
 		//Uchyb regulacji
@@ -105,37 +128,35 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	}
 }
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-	// Odbieranie nastaw przez UART
-	if(rx_Received == ';'){
-		char ext[rx_Index];
-		strncpy(ext, rx_Buffer, rx_Index);
-		float temp = atof(ext);
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
 
-		Tref = (temp>=25.0 && temp<=75.0)? temp : Tref;
+	// Funkcja do odbierania paczek danych z UART
+    if(huart->Instance == USART3)
+    {
+    	if(ProcessDataFlag == 0){
+    		memset(MainBuffer, '\000', MainBuffer_SIZE);
+    		memcpy(MainBuffer, ReceiveBuffer, ReceiveBuffer_SIZE);
+    		memset(ReceiveBuffer, '\000', ReceiveBuffer_SIZE);
+    		ProcessDataFlag = 1;
 
-		rx_Index = 0;
-		memset(rx_Buffer, '0', sizeof(rx_Buffer));
-		rx_Received = 0;
-	}
-	else{
-		rx_Buffer[rx_Index] = (char)rx_Received;
-		rx_Index++;
-	}
-	HAL_UART_Receive_IT(&huart3, (uint8_t *)&rx_Received, 1);
+    		HAL_UARTEx_ReceiveToIdle_DMA(&huart3, ReceiveBuffer, ReceiveBuffer_SIZE);
+    	}
+
+    	HAL_UARTEx_ReceiveToIdle_DMA(&huart3, ReceiveBuffer, ReceiveBuffer_SIZE);
+    }
 }
 
 void SendMessage(const char *message){
-	// Wysyłanie wiadomości do UART
 
+	// Wysyłanie wiadomości do UART
 	if (HAL_UART_Transmit_IT(&huart3, (uint8_t*)message, strlen(message)) != HAL_OK) {
 		Error_Handler();
 	}
 }
 
 void MX_TIM_Init(void){
-	// Redefinicja funkcji bibliotecznej MX_TIM4_Init(); Okres PWM = 500ms
 
+	// Redefinicja funkcji bibliotecznej MX_TIM4_Init(); Okres PWM = 500ms
 	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	TIM_MasterConfigTypeDef sMasterConfig = {0};
 	TIM_OC_InitTypeDef sConfigOC = {0};
@@ -179,7 +200,7 @@ void MX_TIM_Init(void){
 
 void SensorConfiguration(void){
 
-	// Konfiguracja
+	// Konfiguracja czujnika
 	int ret = BMP280_Config(OSRS_16, OSRS_16, OSRS_OFF, MODE_NORMAL, T_SB_1000, IIR_16);
 
 	// Wiadomosc do terminala
