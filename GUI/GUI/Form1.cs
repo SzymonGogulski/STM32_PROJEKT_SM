@@ -1,15 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
-using System.Windows.Forms.DataVisualization.Charting;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GUI
 {
@@ -20,6 +11,7 @@ namespace GUI
         {
             InitializeComponent();
             serialPort1.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+            this.FormClosing += new FormClosingEventHandler(Form1_FormClosing);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -73,14 +65,13 @@ namespace GUI
             // przeniesienie aktualizacji interfejsu użytkownika na wątek UI
             this.Invoke((MethodInvoker)delegate
             {
-                // wyświetlanie aktualnej temperatury
-                lblCurrentTemperature.Text = dataIn[0];
-
                 if (double.TryParse(dataIn[0].Replace('.', ','), out temp) &&
                     double.TryParse(dataIn[1].Replace('.', ','), out tempRef) &&
                     int.TryParse(dataIn[2].Replace('.', ','), out U))
                 {
                     UpdateChart(temp, tempRef, U);
+                    // wyświetlanie aktualnej temperatury
+                    lblCurrentTemperature.Text = dataIn[0];
                 }
                 else
                 {
@@ -157,6 +148,26 @@ namespace GUI
                     txtKd.Text = string.Format("{0:F4}", Convert.ToDouble(kd));
 
                 }
+            }
+        }
+        private void btnClearChart_Click(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                this.Invoke((MethodInvoker)delegate
+            {
+                // czyszczenie punktów na wykresie
+                chart1.Series[0].Points.Clear();
+                chart1.Series[1].Points.Clear();
+                chart1.Series[2].Points.Clear();
+            });
+            }
+        }
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                serialPort1.Close();
             }
         }
     }
