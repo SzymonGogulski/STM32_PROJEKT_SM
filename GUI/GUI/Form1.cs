@@ -72,6 +72,8 @@ namespace GUI
                     UpdateChart(temp, tempRef, U);
                     // wyświetlanie aktualnej temperatury
                     lblCurrentTemperature.Text = dataIn[0];
+                    // wyświetlanie aktualnego błędu
+                    lblCurrentError.Text = ((Math.Abs(tempRef - temp) / 50) * 100).ToString();
                 }
                 else
                 {
