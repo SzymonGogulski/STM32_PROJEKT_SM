@@ -29,10 +29,11 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea4 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Legend legend4 = new System.Windows.Forms.DataVisualization.Charting.Legend();
+            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series11 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series12 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.btnDisconnect = new System.Windows.Forms.Button();
@@ -57,9 +58,9 @@
             this.label7 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.label12 = new System.Windows.Forms.Label();
-            this.label13 = new System.Windows.Forms.Label();
-            this.label14 = new System.Windows.Forms.Label();
+            this.txtKd = new System.Windows.Forms.Label();
+            this.txtKp = new System.Windows.Forms.Label();
+            this.txtKi = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
@@ -71,6 +72,9 @@
             this.groupBox5 = new System.Windows.Forms.GroupBox();
             this.lblCurrentTemperature = new System.Windows.Forms.Label();
             this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.btnClearChart = new System.Windows.Forms.Button();
+            this.groupBox7 = new System.Windows.Forms.GroupBox();
+            this.lblCurrentError = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -78,6 +82,7 @@
             this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
             this.groupBox6.SuspendLayout();
+            this.groupBox7.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -265,7 +270,7 @@
             this.cBoxKd.Name = "cBoxKd";
             this.cBoxKd.Size = new System.Drawing.Size(90, 22);
             this.cBoxKd.TabIndex = 5;
-            this.cBoxKd.Text = "1.0";
+            this.cBoxKd.Text = "0.0";
             // 
             // cBoxKi
             // 
@@ -273,7 +278,7 @@
             this.cBoxKi.Name = "cBoxKi";
             this.cBoxKi.Size = new System.Drawing.Size(90, 22);
             this.cBoxKi.TabIndex = 4;
-            this.cBoxKi.Text = "1.0";
+            this.cBoxKi.Text = "0.0";
             // 
             // cBoxKp
             // 
@@ -281,7 +286,7 @@
             this.cBoxKp.Name = "cBoxKp";
             this.cBoxKp.Size = new System.Drawing.Size(90, 22);
             this.cBoxKp.TabIndex = 3;
-            this.cBoxKp.Text = "1.0";
+            this.cBoxKp.Text = "0.0";
             // 
             // label8
             // 
@@ -312,9 +317,9 @@
             // 
             // groupBox3
             // 
-            this.groupBox3.Controls.Add(this.label12);
-            this.groupBox3.Controls.Add(this.label13);
-            this.groupBox3.Controls.Add(this.label14);
+            this.groupBox3.Controls.Add(this.txtKd);
+            this.groupBox3.Controls.Add(this.txtKp);
+            this.groupBox3.Controls.Add(this.txtKi);
             this.groupBox3.Controls.Add(this.label9);
             this.groupBox3.Controls.Add(this.label11);
             this.groupBox3.Controls.Add(this.label10);
@@ -325,37 +330,37 @@
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Current PID Controller Settings";
             // 
-            // label12
+            // txtKd
             // 
-            this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(56, 125);
-            this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(31, 16);
-            this.label12.TabIndex = 12;
-            this.label12.Text = "0.12";
+            this.txtKd.AutoSize = true;
+            this.txtKd.Location = new System.Drawing.Point(45, 125);
+            this.txtKd.Name = "txtKd";
+            this.txtKd.Size = new System.Drawing.Size(31, 16);
+            this.txtKd.TabIndex = 12;
+            this.txtKd.Text = "0.12";
             // 
-            // label13
+            // txtKp
             // 
-            this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(56, 70);
-            this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(31, 16);
-            this.label13.TabIndex = 10;
-            this.label13.Text = "1.23";
+            this.txtKp.AutoSize = true;
+            this.txtKp.Location = new System.Drawing.Point(45, 70);
+            this.txtKp.Name = "txtKp";
+            this.txtKp.Size = new System.Drawing.Size(31, 16);
+            this.txtKp.TabIndex = 10;
+            this.txtKp.Text = "1.23";
             // 
-            // label14
+            // txtKi
             // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(56, 97);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(24, 16);
-            this.label14.TabIndex = 11;
-            this.label14.Text = "0.4";
+            this.txtKi.AutoSize = true;
+            this.txtKi.Location = new System.Drawing.Point(45, 97);
+            this.txtKi.Name = "txtKi";
+            this.txtKi.Size = new System.Drawing.Size(24, 16);
+            this.txtKi.TabIndex = 11;
+            this.txtKi.Text = "0.4";
             // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(21, 125);
+            this.label9.Location = new System.Drawing.Point(10, 125);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(25, 16);
             this.label9.TabIndex = 9;
@@ -364,7 +369,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(21, 70);
+            this.label11.Location = new System.Drawing.Point(10, 70);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(25, 16);
             this.label11.TabIndex = 7;
@@ -373,7 +378,7 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(21, 97);
+            this.label10.Location = new System.Drawing.Point(10, 97);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(20, 16);
             this.label10.TabIndex = 8;
@@ -381,29 +386,37 @@
             // 
             // chart1
             // 
-            chartArea1.Name = "ChartArea1";
-            this.chart1.ChartAreas.Add(chartArea1);
-            legend1.Name = "Legend1";
-            legend1.Position.Auto = false;
-            legend1.Position.Height = 8.303249F;
-            legend1.Position.Width = 22.05714F;
-            legend1.Position.X = 74.94286F;
-            this.chart1.Legends.Add(legend1);
+            this.chart1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            chartArea4.Name = "ChartArea1";
+            this.chart1.ChartAreas.Add(chartArea4);
+            legend4.Name = "Legend1";
+            legend4.Position.Auto = false;
+            legend4.Position.Height = 10.30325F;
+            legend4.Position.Width = 22.05714F;
+            legend4.Position.X = 74.94286F;
+            this.chart1.Legends.Add(legend4);
             this.chart1.Location = new System.Drawing.Point(6, 20);
             this.chart1.Name = "chart1";
-            series1.BorderWidth = 2;
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Legend = "Legend1";
-            series1.Name = "Temperatura aktualna";
-            series2.BorderWidth = 2;
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series2.Legend = "Legend1";
-            series2.Name = "Temperatura zadana";
-            this.chart1.Series.Add(series1);
-            this.chart1.Series.Add(series2);
-            this.chart1.Size = new System.Drawing.Size(876, 555);
+            series10.BorderWidth = 2;
+            series10.ChartArea = "ChartArea1";
+            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series10.Legend = "Legend1";
+            series10.Name = "Temperatura aktualna";
+            series11.BorderWidth = 2;
+            series11.ChartArea = "ChartArea1";
+            series11.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series11.Legend = "Legend1";
+            series11.Name = "Temperatura zadana";
+            series12.ChartArea = "ChartArea1";
+            series12.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series12.Legend = "Legend1";
+            series12.Name = "Sygnał sterujący";
+            this.chart1.Series.Add(series10);
+            this.chart1.Series.Add(series11);
+            this.chart1.Series.Add(series12);
+            this.chart1.Size = new System.Drawing.Size(876, 613);
             this.chart1.TabIndex = 6;
             this.chart1.Text = "chart1";
             // 
@@ -435,6 +448,7 @@
             this.cBoxSetpointTemperature.Name = "cBoxSetpointTemperature";
             this.cBoxSetpointTemperature.Size = new System.Drawing.Size(41, 22);
             this.cBoxSetpointTemperature.TabIndex = 1;
+            this.cBoxSetpointTemperature.Text = "0.0";
             // 
             // label15
             // 
@@ -459,7 +473,7 @@
             // 
             this.lblCurrentTemperature.AutoSize = true;
             this.lblCurrentTemperature.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
-            this.lblCurrentTemperature.Location = new System.Drawing.Point(34, 66);
+            this.lblCurrentTemperature.Location = new System.Drawing.Point(36, 69);
             this.lblCurrentTemperature.Name = "lblCurrentTemperature";
             this.lblCurrentTemperature.Size = new System.Drawing.Size(27, 20);
             this.lblCurrentTemperature.TabIndex = 13;
@@ -467,19 +481,54 @@
             // 
             // groupBox6
             // 
+            this.groupBox6.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox6.Controls.Add(this.chart1);
             this.groupBox6.Location = new System.Drawing.Point(291, 13);
             this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Size = new System.Drawing.Size(888, 581);
+            this.groupBox6.Size = new System.Drawing.Size(888, 639);
             this.groupBox6.TabIndex = 9;
             this.groupBox6.TabStop = false;
             this.groupBox6.Text = "Preview of measurement, reference and control signal";
+            // 
+            // btnClearChart
+            // 
+            this.btnClearChart.Location = new System.Drawing.Point(177, 600);
+            this.btnClearChart.Name = "btnClearChart";
+            this.btnClearChart.Size = new System.Drawing.Size(107, 52);
+            this.btnClearChart.TabIndex = 8;
+            this.btnClearChart.Text = "Clear chart";
+            this.btnClearChart.UseVisualStyleBackColor = true;
+            this.btnClearChart.Click += new System.EventHandler(this.btnClearChart_Click);
+            // 
+            // groupBox7
+            // 
+            this.groupBox7.Controls.Add(this.lblCurrentError);
+            this.groupBox7.Location = new System.Drawing.Point(13, 600);
+            this.groupBox7.Name = "groupBox7";
+            this.groupBox7.Size = new System.Drawing.Size(157, 52);
+            this.groupBox7.TabIndex = 14;
+            this.groupBox7.TabStop = false;
+            this.groupBox7.Text = "Current error [%]";
+            // 
+            // lblCurrentError
+            // 
+            this.lblCurrentError.AutoSize = true;
+            this.lblCurrentError.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(238)));
+            this.lblCurrentError.Location = new System.Drawing.Point(62, 23);
+            this.lblCurrentError.Name = "lblCurrentError";
+            this.lblCurrentError.Size = new System.Drawing.Size(18, 20);
+            this.lblCurrentError.TabIndex = 13;
+            this.lblCurrentError.Text = "0";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1191, 606);
+            this.ClientSize = new System.Drawing.Size(1191, 664);
+            this.Controls.Add(this.groupBox7);
+            this.Controls.Add(this.btnClearChart);
             this.Controls.Add(this.groupBox6);
             this.Controls.Add(this.groupBox5);
             this.Controls.Add(this.groupBox4);
@@ -501,6 +550,8 @@
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
             this.groupBox6.ResumeLayout(false);
+            this.groupBox7.ResumeLayout(false);
+            this.groupBox7.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -531,9 +582,9 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button btnSetPidSettings;
         private System.Windows.Forms.GroupBox groupBox3;
-        private System.Windows.Forms.Label label12;
-        private System.Windows.Forms.Label label13;
-        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label txtKd;
+        private System.Windows.Forms.Label txtKp;
+        private System.Windows.Forms.Label txtKi;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label10;
@@ -545,6 +596,9 @@
         private System.Windows.Forms.GroupBox groupBox5;
         private System.Windows.Forms.Label lblCurrentTemperature;
         private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.Button btnClearChart;
+        private System.Windows.Forms.GroupBox groupBox7;
+        private System.Windows.Forms.Label lblCurrentError;
     }
 }
 

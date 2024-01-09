@@ -1,15 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO.Ports;
-using System.Windows.Forms.DataVisualization.Charting;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace GUI
 {
@@ -20,6 +11,7 @@ namespace GUI
         {
             InitializeComponent();
             serialPort1.DataReceived += new SerialDataReceivedEventHandler(DataReceivedHandler);
+            this.FormClosing += new FormClosingEventHandler(Form1_FormClosing);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -66,18 +58,22 @@ namespace GUI
         private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort sp = (SerialPort)sender;
-            string dataIn = sp.ReadLine().Replace(";", string.Empty);
-            double temperature;
+            string[] dataIn = sp.ReadLine().Replace(";", string.Empty).Split(',');
+            double temp, tempRef;
+            int U;
 
             // przeniesienie aktualizacji interfejsu użytkownika na wątek UI
             this.Invoke((MethodInvoker)delegate
             {
-                // wyświetlanie aktualnej temperatury
-                lblCurrentTemperature.Text = dataIn;
-
-                if (double.TryParse(dataIn.Replace('.', ','), out temperature))
+                if (double.TryParse(dataIn[0].Replace('.', ','), out temp) &&
+                    double.TryParse(dataIn[1].Replace('.', ','), out tempRef) &&
+                    int.TryParse(dataIn[2].Replace('.', ','), out U))
                 {
-                    UpdateChart(temperature);
+                    UpdateChart(temp, tempRef, U);
+                    // wyświetlanie aktualnej temperatury
+                    lblCurrentTemperature.Text = dataIn[0];
+                    // wyświetlanie aktualnego błędu
+                    lblCurrentError.Text = ((Math.Abs(tempRef - temp) / 50) * 100).ToString();
                 }
                 else
                 {
@@ -88,14 +84,16 @@ namespace GUI
         }
 
         // aktualizacja wykresu
-        private void UpdateChart(double temperature)
+        private void UpdateChart(double temperature, double refTemperature, int U)
         {
             this.Invoke((MethodInvoker)delegate
             {
                 // temperatura odczytana
                 chart1.Series[0].Points.AddY(temperature);
                 // temperatura zadana
-                chart1.Series[1].Points.AddY(setpointTemperature);
+                chart1.Series[1].Points.AddY(refTemperature);
+                // sygnał sterujący
+                chart1.Series[2].Points.AddY(U);
 
             });
         }
@@ -113,14 +111,14 @@ namespace GUI
                 { 
                     setpointTemperature = Convert.ToDouble(cBoxSetpointTemperature.Text.Replace('.', ','));
                     
-                    if (setpointTemperature < 0.0 || setpointTemperature > 75.0)
+                    if (setpointTemperature < 25.0 || setpointTemperature > 75.0)
                     {
-                        MessageBox.Show("Wprowadź liczbę z zakresu od 0 do 75.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        MessageBox.Show("Wprowadź liczbę z zakresu od 25 do 75.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         cBoxSetpointTemperature.Text = "0.0";
                     }
                     else
                     {
-                        string temperatureToSet = string.Format("{{setTemperature:{0:F2} }}", setpointTemperature).Replace(',', '.').Replace(" ", string.Empty);
+                        string temperatureToSet = string.Format("t{0:F2};", setpointTemperature).Replace(',', '.');
                         serialPort1.WriteLine(temperatureToSet);
                         Console.WriteLine(temperatureToSet);
                     }
@@ -141,11 +139,37 @@ namespace GUI
                 }
                 else 
                 {
-                    string pidSettings = string.Format("{{kp:{0:F2};ki:{1:F2};kd:{2:F2} }}", Convert.ToDouble(cBoxKp.Text.Replace('.', ',')), Convert.ToDouble(cBoxKi.Text.Replace('.', ',')), Convert.ToDouble(cBoxKd.Text.Replace('.', ','))).Replace(',', '.').Replace(';', ',').Replace(" ", string.Empty);
+                    string kp = cBoxKp.Text.Replace('.', ',');
+                    string ki = cBoxKi.Text.Replace('.', ',');
+                    string kd = cBoxKd.Text.Replace('.', ',');
+                    string pidSettings = string.Format("p{0:F4}:{1:F4}:{2:F4};", Convert.ToDouble(kp), Convert.ToDouble(ki), Convert.ToDouble(kd)).Replace(',', '.').Replace(':', ',');
                     serialPort1.WriteLine(pidSettings);
                     Console.WriteLine(pidSettings.Trim());
+                    txtKp.Text = string.Format("{0:F4}", Convert.ToDouble(kp));
+                    txtKi.Text = string.Format("{0:F4}", Convert.ToDouble(ki));
+                    txtKd.Text = string.Format("{0:F4}", Convert.ToDouble(kd));
 
                 }
+            }
+        }
+        private void btnClearChart_Click(object sender, EventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                this.Invoke((MethodInvoker)delegate
+            {
+                // czyszczenie punktów na wykresie
+                chart1.Series[0].Points.Clear();
+                chart1.Series[1].Points.Clear();
+                chart1.Series[2].Points.Clear();
+            });
+            }
+        }
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (serialPort1.IsOpen)
+            {
+                serialPort1.Close();
             }
         }
     }
