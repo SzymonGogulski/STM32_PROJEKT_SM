@@ -49,6 +49,8 @@ arm_pid_instance_f32 PID;
 float error = 0.0;
 float U = 0.0;
 int set_comp = 0;
+float32_t R = 0.0;
+int D_PWM = 1250;
 
 int main(void)
 {
@@ -101,7 +103,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			}
 			// pfloat,float,float;
 			else if (MainBuffer[0] == 'p') {
-				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &Kp, &Ki, &Kd);
+				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &PID.Kp, &PID.Ki, &PID.Kd);
+//				PID.Kp = Kp;
+//				PID.Ki = Ki;
+//				PID.Kd = Kd;
+				PID.A0 = PID.Kp + PID.Ki + PID.Kd;
+				PID.A1 = -PID.Kp - 2.0*PID.Kd;
+				PID.A2 = PID.Kd;
+				arm_pid_init_f32(&PID, 0);
 			}
 			ProcessDataFlag = 0;
 		}
@@ -117,12 +126,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		//Uchyb regulacji
 		error = Tref - Temperature;
 		// sygnał sterujący z regulatora
-		U = arm_pid_f32(&PID, error);
+		R = arm_pid_f32(&PID, error);
+		U = R/10.0;
 		// Saturacja sygnału U
 		U = (U <= 1.0) ? U : 1.0;
 		U = (U >= 0.0) ? U : 0.0;
 		// Przeliczenie U na set_compare
-		set_comp = U * (htim4.Init.Period + 1);
+		set_comp = U * D_PWM;
 		// Zadanie wypełnienia PWM
 		__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, set_comp);
 	}
@@ -203,18 +213,11 @@ void SensorConfiguration(void){
 	// Konfiguracja czujnika
 	int ret = BMP280_Config(OSRS_16, OSRS_16, OSRS_OFF, MODE_NORMAL, T_SB_1000, IIR_16);
 
-	// Wiadomosc do terminala
-	HAL_Delay(100);
-	char msg[] = "Start up. \r\n";
-	HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
 	if (ret>=0){
-		sprintf(msg, "Correct %d\r\n", (int) ret);
 		HAL_GPIO_TogglePin(LD1_GPIO_Port, LD1_Pin);
 	}else{
-		sprintf(msg, "Fail %d\r\n", (int) ret);
 		HAL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);
 	}
-	HAL_UART_Transmit(&huart3, (uint8_t*)msg, strlen(msg), 50);
 }
 
 void SystemClock_Config(void)
