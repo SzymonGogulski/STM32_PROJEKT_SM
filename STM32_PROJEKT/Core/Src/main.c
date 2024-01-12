@@ -36,24 +36,29 @@ char SendBuffer[SendBuffer_SIZE];
 #define MainBuffer_SIZE 64
 uint8_t ReceiveBuffer[ReceiveBuffer_SIZE];
 uint8_t MainBuffer[MainBuffer_SIZE];
-int ProcessDataFlag = 0;
+int ProcessDataFlag;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size);
 
 // POMIARY, NASTAWY I ZMIENNE REGULATORA
-float Temperature, Pressure, Humidity;
-float Tref = 25.0f; //temperatura zadana
-float Kp = 1.0f;
-float Ki = 0.0f;
-float Kd = 0.0f;
+typedef struct {
+    float Tref;
+    float Kp;
+    float Ki;
+    float Kd;
+} Settings;
+void InitializeSettings(Settings *data);
+void SaveSettings(Settings *data);
+Settings data;
 arm_pid_instance_f32 PID;
-float error = 0.0;
-float U = 0.0;
-int set_comp = 0;
-float32_t R = 0.0;
-int D_PWM = 1250;
+float Temperature, Pressure, Humidity;
+float Tref;
+float error;
+float32_t R;
+float U;
+int set_comp;
+const int D_PWM = 1250;
 
-int main(void)
-{
+int main(void){
 	// Inicjalizacja peryferiów
 	HAL_Init();
 	SystemClock_Config();
@@ -73,10 +78,12 @@ int main(void)
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
 
-	// Inicjalizacja regulatora PID
-	PID.Kp = Kp;
-	PID.Ki = Ki;
-	PID.Kd = Kd;
+	// Inicjalizacja regulatora PID i zmiennych
+	InitializeSettings(&data);
+	Tref = data.Tref;
+	PID.Kp = data.Kp;
+	PID.Ki = data.Ki;
+	PID.Kd = data.Kd;
 	arm_pid_init_f32(&PID, 1);
 
 	// Odbieranie nastaw z GUI
@@ -85,12 +92,16 @@ int main(void)
 	while(1){}
 }
 
+// FUNKCJE UZYTKOWNIKA -----------------------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
-	// Przerwanie zegara
+
+	// PRZERWANIE ZEGARA
 	// 1) PRZETWORZENIE DANYCH UART
-	// 1) POMIAR
-	// 2) WYSLANIE POMIARU
+	// Dodaj 1.2) ZAPISANIE NOWYCH NASTAW DO EPROM
+	// 2) POMIAR
+	// 3) WYSLANIE POMIARU
 	// 4) ALGORYM REGULACJI PID
+	// Dodaj 4.2) FILTR CYFROWY
 
 	if(htim->Instance == TIM4){
 
@@ -104,9 +115,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 			// pfloat,float,float;
 			else if (MainBuffer[0] == 'p') {
 				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &PID.Kp, &PID.Ki, &PID.Kd);
-//				PID.Kp = Kp;
-//				PID.Ki = Ki;
-//				PID.Kd = Kd;
 				PID.A0 = PID.Kp + PID.Ki + PID.Kd;
 				PID.A1 = -PID.Kp - 2.0*PID.Kd;
 				PID.A2 = PID.Kd;
@@ -118,24 +126,40 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		// Pomiar
 		BMP280_Measure();
 
-		// Wyślij pomiar do terminala
+		// Wyslij pomiar do terminala
 		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, Tref, (int)(U*100.0));
 		SendMessage(SendBuffer);
 
-		// Zamknięty układ regulacji z regulatorem PID
+		// Zamkniety uklad regulacji z regulatorem PID
 		//Uchyb regulacji
 		error = Tref - Temperature;
-		// sygnał sterujący z regulatora
+		// sygnal sterujacy z regulatora
 		R = arm_pid_f32(&PID, error);
 		U = R/10.0;
-		// Saturacja sygnału U
+		// Saturacja sygnalu U
 		U = (U <= 1.0) ? U : 1.0;
 		U = (U >= 0.0) ? U : 0.0;
 		// Przeliczenie U na set_compare
 		set_comp = U * D_PWM;
-		// Zadanie wypełnienia PWM
+		// Zadanie wypelnienia PWM
 		__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, set_comp);
 	}
+}
+
+void InitializeSettings(Settings *data) {
+
+	// Wczytanie ustawien zapisanych w EEPROM
+
+	// Inicjalizacja ustawien domyslnych
+    data->Tref = 25.0;
+    data->Kp = 1.0;
+    data->Ki = 0.0;
+    data->Kd = 0.0;
+}
+
+void SaveSettings(Settings *data){
+
+	// Zapisywanie danych do EEPROM
 }
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
@@ -158,7 +182,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
 
 void SendMessage(const char *message){
 
-	// Wysyłanie wiadomości do UART
+	// Wysylanie wiadomosci do UART
 	if (HAL_UART_Transmit_IT(&huart3, (uint8_t*)message, strlen(message)) != HAL_OK) {
 		Error_Handler();
 	}
@@ -220,6 +244,7 @@ void SensorConfiguration(void){
 	}
 }
 
+// FUNKCJE SYSTEMOWE -----------------------------------------
 void SystemClock_Config(void)
 {
 	RCC_OscInitTypeDef RCC_OscInitStruct = {0};
