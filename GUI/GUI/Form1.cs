@@ -94,6 +94,8 @@ namespace GUI
                 chart1.Series[1].Points.AddY(refTemperature);
                 // sygnał sterujący
                 chart1.Series[2].Points.AddY(U);
+                // zmiana skali na osi x
+                chart1.ChartAreas[0].AxisX.Interval = 0.5;
 
             });
         }
