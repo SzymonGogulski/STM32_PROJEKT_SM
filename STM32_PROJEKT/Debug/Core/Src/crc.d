@@ -1,5 +1,4 @@
-Core/Src/BMP280_STM32.o: ../Core/Src/BMP280_STM32.c \
- ../Core/Inc/BMP280_STM32.h \
+Core/Src/crc.o: ../Core/Src/crc.c ../Core/Inc/crc.h ../Core/Inc/main.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h \
  ../Core/Inc/stm32f7xx_hal_conf.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h \
@@ -32,7 +31,8 @@ Core/Src/BMP280_STM32.o: ../Core/Src/BMP280_STM32.c \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_tim_ex.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart.h \
  ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_uart_ex.h
-../Core/Inc/BMP280_STM32.h:
+../Core/Inc/crc.h:
+../Core/Inc/main.h:
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal.h:
 ../Core/Inc/stm32f7xx_hal_conf.h:
 ../Drivers/STM32F7xx_HAL_Driver/Inc/stm32f7xx_hal_rcc.h:

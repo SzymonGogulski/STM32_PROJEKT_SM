@@ -22,6 +22,9 @@ void SystemClock_Config(void);
 // OBSLUGA CZUJNIKA
 void SensorConfiguration(void);
 
+// obliczanie CRC
+unsigned int calculateCRC(char* data, uint32_t dataSize);
+
 // FUNKCJE I ZMIENNE ZEGAROWE
 extern TIM_HandleTypeDef htim4;
 void MX_TIM_Init(void);
@@ -115,26 +118,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 		//Processing danych
 		if(ProcessDataFlag == 1){
-			calculateCRCValue = calculateCRC(MainBuffer, sizeof(MainBuffer));
+			calculateCRCValue = calculateCRC((char*) MainBuffer, sizeof(MainBuffer));
 
 			// tfloat;
 			if (MainBuffer[0] == 't') {
 				// aktualną Tref zapisujemy do zmiennej
-				&temp.Tref = Tref;
-				sscanf((char*)&MainBuffer[1], "%f;CRC:%u;", &Tref, &receivedCRCValue);
+				temp.Tref = Tref;
+				sscanf((char*)&MainBuffer[1], "%f;CRC:%lu;", &Tref, &receivedCRCValue);
 
 				// jeśli CRC nie są identyczne to przypisujemy poprzednią Tref zamiast odebranej z GUI
 				if(calculateCRCValue != receivedCRCValue) {
-					&Tref = temp.Tref;
+					Tref = temp.Tref;
 				}
 			}
 			// pfloat,float,float;
 			else if (MainBuffer[0] == 'p') {
 				// aktualne nastawy zapisujemy do zmiennych
-				&temp.Kp = PID.Kp;
-				&temp.Ki = PID.Ki;
-				&temp.Kd = PID.Kd;
-				sscanf((char*)&MainBuffer[1], "%f,%f,%f;CRC:%u;", &PID.Kp, &PID.Ki, &PID.Kd, &receivedCRCValue);
+				temp.Kp = PID.Kp;
+				temp.Ki = PID.Ki;
+				temp.Kd = PID.Kd;
+				sscanf((char*)&MainBuffer[1], "%f,%f,%f;CRC:%lu;", &PID.Kp, &PID.Ki, &PID.Kd, &receivedCRCValue);
 
 				// jeśli CRC nie są identyczne to przypisujemy poprzednie nastawy PID, zamiast odebranych z GUI
 				if(calculateCRCValue != receivedCRCValue) {
@@ -158,7 +161,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, Tref, (int)(U*100.0));
 		// obliczenie CRC
 		calculateCRCValue = calculateCRC(SendBuffer, sizeof(SendBuffer));
-		sprintf(SendBuffer + strlen(SendBuffer), "CRC:%u;\r\n", calculateCRCValue);
+		sprintf(SendBuffer + strlen(SendBuffer), "CRC:%lu;\r\n", calculateCRCValue);
 		SendMessage(SendBuffer);
 
 		// Zamkniety uklad regulacji z regulatorem PID
@@ -219,9 +222,9 @@ void SendMessage(const char *message){
 	}
 }
 
-uint32_t calculateCRC(uint32_t* data, uint32_t dataSize)
+unsigned int calculateCRC(char* data, uint32_t dataSize)
 {
-    return HAL_CRC_Calculate(&hcrc, data, dataSize);
+    return HAL_CRC_Calculate(&hcrc, (uint32_t*)data, dataSize);
 }
 
 void MX_TIM_Init(void){
