@@ -2,6 +2,7 @@
 #include "main.h"
 #include "i2c.h"
 #include "tim.h"
+#include "crc.h"
 #include "usart.h"
 #include "gpio.h"
 #include "dma.h"
@@ -48,7 +49,7 @@ typedef struct {
 } Settings;
 void InitializeSettings(Settings *data);
 void SaveSettings(Settings *data);
-Settings data;
+Settings data, temp;
 arm_pid_instance_f32 PID;
 float Temperature, Pressure, Humidity;
 float Tref;
@@ -57,6 +58,9 @@ float32_t R;
 float U;
 int set_comp;
 const int D_PWM = 1250;
+uint32_t calculateCRCValue;
+uint32_t receivedCRCValue;
+
 
 int main(void){
 	// Inicjalizacja peryferiów
@@ -66,6 +70,7 @@ int main(void){
 	MX_DMA_Init();
 	MX_USART3_UART_Init();
 	MX_I2C1_Init();
+	MX_CRC_Init();
 
 	// Konfiguracja czujnika
 	SensorConfiguration();
@@ -89,6 +94,9 @@ int main(void){
 	// Odbieranie nastaw z GUI
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart3, ReceiveBuffer, ReceiveBuffer_SIZE);
 
+	// Inicjalizacja CRC
+    HAL_CRC_Init(&hcrc);
+
 	while(1){}
 }
 
@@ -107,14 +115,34 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 		//Processing danych
 		if(ProcessDataFlag == 1){
+			calculateCRCValue = calculateCRC(MainBuffer, sizeof(MainBuffer));
 
 			// tfloat;
 			if (MainBuffer[0] == 't') {
-				sscanf((char*)&MainBuffer[1], "%f;", &Tref);
+				// aktualną Tref zapisujemy do zmiennej
+				&temp.Tref = Tref;
+				sscanf((char*)&MainBuffer[1], "%f;CRC:%u;", &Tref, &receivedCRCValue);
+
+				// jeśli CRC nie są identyczne to przypisujemy poprzednią Tref zamiast odebranej z GUI
+				if(calculateCRCValue != receivedCRCValue) {
+					&Tref = temp.Tref;
+				}
 			}
 			// pfloat,float,float;
 			else if (MainBuffer[0] == 'p') {
-				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &PID.Kp, &PID.Ki, &PID.Kd);
+				// aktualne nastawy zapisujemy do zmiennych
+				&temp.Kp = PID.Kp;
+				&temp.Ki = PID.Ki;
+				&temp.Kd = PID.Kd;
+				sscanf((char*)&MainBuffer[1], "%f,%f,%f;CRC:%u;", &PID.Kp, &PID.Ki, &PID.Kd, &receivedCRCValue);
+
+				// jeśli CRC nie są identyczne to przypisujemy poprzednie nastawy PID, zamiast odebranych z GUI
+				if(calculateCRCValue != receivedCRCValue) {
+					PID.Kp = temp.Kp;
+					PID.Ki = temp.Ki;
+					PID.Kd = temp.Kd;
+				}
+
 				PID.A0 = PID.Kp + PID.Ki + PID.Kd;
 				PID.A1 = -PID.Kp - 2.0*PID.Kd;
 				PID.A2 = PID.Kd;
@@ -126,8 +154,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		// Pomiar
 		BMP280_Measure();
 
-		// Wyslij pomiar do terminala
+		// Obliczanie CRC oraz wysyłanie pomiaru do terminala
 		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, Tref, (int)(U*100.0));
+		// obliczenie CRC
+		calculateCRCValue = calculateCRC(SendBuffer, sizeof(SendBuffer));
+		sprintf(SendBuffer + strlen(SendBuffer), "CRC:%u;\r\n", calculateCRCValue);
 		SendMessage(SendBuffer);
 
 		// Zamkniety uklad regulacji z regulatorem PID
@@ -186,6 +217,11 @@ void SendMessage(const char *message){
 	if (HAL_UART_Transmit_IT(&huart3, (uint8_t*)message, strlen(message)) != HAL_OK) {
 		Error_Handler();
 	}
+}
+
+uint32_t calculateCRC(uint32_t* data, uint32_t dataSize)
+{
+    return HAL_CRC_Calculate(&hcrc, data, dataSize);
 }
 
 void MX_TIM_Init(void){
