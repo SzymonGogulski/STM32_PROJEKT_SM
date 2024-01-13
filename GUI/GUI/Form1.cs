@@ -1,6 +1,9 @@
 using System;
 using System.Windows.Forms;
 using System.IO.Ports;
+using System.Text;
+using System.IO.Compression;
+
 
 namespace GUI
 {
@@ -25,7 +28,8 @@ namespace GUI
 
         private void btnConnect_Click(object sender, EventArgs e)
         {
-            try {
+            try
+            {
                 serialPort1.PortName = cBoxCOMPORT.Text;
                 serialPort1.BaudRate = Convert.ToInt32(cBoxBaudRate.Text);
                 serialPort1.DataBits = Convert.ToInt32(cBoxDataBits.Text);
@@ -37,7 +41,9 @@ namespace GUI
                 btnConnect.Enabled = false;
                 btnDisconnect.Enabled = true;
 
-            } catch (Exception err){
+            }
+            catch (Exception err)
+            {
                 MessageBox.Show(err.Message, "Error during connect!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 btnConnect.Enabled = true;
                 btnDisconnect.Enabled = false;
@@ -58,27 +64,33 @@ namespace GUI
         private void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
         {
             SerialPort sp = (SerialPort)sender;
-            string[] dataIn = sp.ReadLine().Replace(";", string.Empty).Split(',');
             double temp, tempRef;
             int U;
+            string[] parts = sp.ReadLine().Split(new[] { "CRC:" }, StringSplitOptions.None);
+            string[] dataIn = parts[0].Replace(";", string.Empty).Split(',');
+            uint receivedCRC = uint.Parse(parts[1]);
+            uint calculatedCRC = CalculateCRC(parts[0]);
 
             // przeniesienie aktualizacji interfejsu użytkownika na wątek UI
             this.Invoke((MethodInvoker)delegate
             {
-                if (double.TryParse(dataIn[0].Replace('.', ','), out temp) &&
-                    double.TryParse(dataIn[1].Replace('.', ','), out tempRef) &&
-                    int.TryParse(dataIn[2].Replace('.', ','), out U))
+                if (receivedCRC == calculatedCRC)
                 {
-                    UpdateChart(temp, tempRef, U);
-                    // wyświetlanie aktualnej temperatury
-                    lblCurrentTemperature.Text = dataIn[0];
-                    // wyświetlanie aktualnego błędu
-                    lblCurrentError.Text = ((Math.Abs(tempRef - temp) / 50) * 100).ToString();
-                }
-                else
-                {
-                    MessageBox.Show("Błąd aktualizowania wykresu!", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    if (double.TryParse(dataIn[0].Replace('.', ','), out temp) &&
+                        double.TryParse(dataIn[1].Replace('.', ','), out tempRef) &&
+                        int.TryParse(dataIn[2].Replace('.', ','), out U))
+                    {
+                        UpdateChart(temp, tempRef, U);
+                        // wyświetlanie aktualnej temperatury
+                        lblCurrentTemperature.Text = dataIn[0];
+                        // wyświetlanie aktualnego błędu
+                        lblCurrentError.Text = ((Math.Abs(tempRef - temp) / 50) * 100).ToString();
+                    }
+                    else
+                    {
+                        MessageBox.Show("Błąd aktualizowania wykresu!", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
+                    }
                 }
             });
         }
@@ -109,10 +121,10 @@ namespace GUI
                 {
                     MessageBox.Show("Pole nie może być puste. Wprowadź wartość temperatury.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                else 
-                { 
+                else
+                {
                     setpointTemperature = Convert.ToDouble(cBoxSetpointTemperature.Text.Replace('.', ','));
-                    
+
                     if (setpointTemperature < 25.0 || setpointTemperature > 75.0)
                     {
                         MessageBox.Show("Wprowadź liczbę z zakresu od 25 do 75.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -121,8 +133,10 @@ namespace GUI
                     else
                     {
                         string temperatureToSet = string.Format("t{0:F2};", setpointTemperature).Replace(',', '.');
-                        serialPort1.WriteLine(temperatureToSet);
-                        Console.WriteLine(temperatureToSet);
+                        uint crcValue = CalculateCRC(temperatureToSet);
+                        string sendData = string.Format("{0}CRC:{1};", temperatureToSet, crcValue);
+                        serialPort1.WriteLine(sendData);
+                        Console.WriteLine(sendData);
                     }
 
                 }
@@ -139,14 +153,19 @@ namespace GUI
                 {
                     MessageBox.Show("Pola nie mogą być puste. Wprowadź wszystkie wartości nastaw regulatora PID.", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
-                else 
+                else
                 {
                     string kp = cBoxKp.Text.Replace('.', ',');
                     string ki = cBoxKi.Text.Replace('.', ',');
                     string kd = cBoxKd.Text.Replace('.', ',');
+
                     string pidSettings = string.Format("p{0:F4}:{1:F4}:{2:F4};", Convert.ToDouble(kp), Convert.ToDouble(ki), Convert.ToDouble(kd)).Replace(',', '.').Replace(':', ',');
-                    serialPort1.WriteLine(pidSettings);
-                    Console.WriteLine(pidSettings.Trim());
+                    uint crcValue = CalculateCRC(pidSettings);
+                    string sendData = string.Format("{0}CRC:{1};", pidSettings, crcValue);
+
+                    serialPort1.WriteLine(sendData);
+                    Console.WriteLine(sendData);
+
                     txtKp.Text = string.Format("{0:F4}", Convert.ToDouble(kp));
                     txtKi.Text = string.Format("{0:F4}", Convert.ToDouble(ki));
                     txtKd.Text = string.Format("{0:F4}", Convert.ToDouble(kd));
@@ -173,6 +192,63 @@ namespace GUI
             {
                 serialPort1.Close();
             }
+        }
+
+        static uint CalculateCRC(string data)
+        {
+            using (var crc32 = new CRC32())
+            {
+                byte[] dataBytes = Encoding.UTF8.GetBytes(data);
+                return crc32.ComputeChecksum(dataBytes);
+            }
+        }
+    }
+    public class CRC32 : IDisposable
+    {
+        private uint[] _table;
+        private const uint Polynomial = 0xEDB88320;
+
+        public CRC32()
+        {
+            _table = new uint[256];
+
+            uint temp = 0;
+
+            for (uint i = 0; i < 256; i++)
+            {
+                temp = i;
+
+                for (int j = 8; j > 0; j--)
+                {
+                    if ((temp & 1) == 1)
+                    {
+                        temp = (temp >> 1) ^ Polynomial;
+                    }
+                    else
+                    {
+                        temp >>= 1;
+                    }
+                }
+
+                _table[i] = temp;
+            }
+        }
+
+        public uint ComputeChecksum(byte[] bytes)
+        {
+            uint crc = 0xFFFFFFFF;
+
+            foreach (byte b in bytes)
+            {
+                crc = (crc >> 8) ^ _table[(crc ^ b) & 0xFF];
+            }
+
+            return ~crc;
+        }
+
+        public void Dispose()
+        {
+            _table = null;
         }
     }
 }

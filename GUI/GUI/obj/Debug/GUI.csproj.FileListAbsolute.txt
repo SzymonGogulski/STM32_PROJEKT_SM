@@ -18,3 +18,17 @@ C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\obj\Debug\GUI.csproj.GenerateReso
 C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\obj\Debug\GUI.csproj.CoreCompileInputs.cache
 C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\obj\Debug\GUI.exe
 C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\obj\Debug\GUI.pdb
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\ICSharpCode.SharpZipLib.dll
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Buffers.dll
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Memory.dll
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Numerics.Vectors.dll
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Threading.Tasks.Extensions.dll
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\ICSharpCode.SharpZipLib.pdb
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\ICSharpCode.SharpZipLib.xml
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Buffers.xml
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Memory.xml
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Numerics.Vectors.xml
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Threading.Tasks.Extensions.xml
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\obj\Debug\GUI.csproj.CopyComplete
