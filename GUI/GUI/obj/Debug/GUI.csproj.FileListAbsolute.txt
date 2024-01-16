@@ -32,3 +32,4 @@ C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Numerics.Vectors
 C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Runtime.CompilerServices.Unsafe.xml
 C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\System.Threading.Tasks.Extensions.xml
 C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\obj\Debug\GUI.csproj.CopyComplete
+C:\Users\Alan\Desktop\STM32_PROJEKT_SM\GUI\GUI\bin\Debug\Crc.dll

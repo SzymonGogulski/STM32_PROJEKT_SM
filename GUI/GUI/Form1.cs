@@ -2,7 +2,7 @@ using System;
 using System.Windows.Forms;
 using System.IO.Ports;
 using System.Text;
-using System.IO.Compression;
+using Crc;
 
 
 namespace GUI
@@ -66,16 +66,21 @@ namespace GUI
             SerialPort sp = (SerialPort)sender;
             double temp, tempRef;
             int U;
-            string[] parts = sp.ReadLine().Split(new[] { "CRC:" }, StringSplitOptions.None);
-            string[] dataIn = parts[0].Replace(";", string.Empty).Split(',');
-            uint receivedCRC = uint.Parse(parts[1]);
+            uint receivedCRC;
+            string[] parts = sp.ReadLine().Split(new string[] { "CRC:" }, StringSplitOptions.None);
+            Console.WriteLine("parts[0]: " + parts[0]);
+            string[] dataIn = parts[0].Replace(";", string.Empty).Replace(" ","").Split(',');
+            string receivedCRCstring = parts[1].Replace(";", string.Empty);
+            uint.TryParse(receivedCRCstring, out receivedCRC);
+            Console.WriteLine("receivedCRC: " + receivedCRC);
             uint calculatedCRC = CalculateCRC(parts[0]);
+            Console.WriteLine("calculatedCRC: " + calculatedCRC);
 
             // przeniesienie aktualizacji interfejsu użytkownika na wątek UI
             this.Invoke((MethodInvoker)delegate
             {
-                if (receivedCRC == calculatedCRC)
-                {
+                //if (receivedCRC == calculatedCRC)
+                //{
                     if (double.TryParse(dataIn[0].Replace('.', ','), out temp) &&
                         double.TryParse(dataIn[1].Replace('.', ','), out tempRef) &&
                         int.TryParse(dataIn[2].Replace('.', ','), out U))
@@ -91,7 +96,7 @@ namespace GUI
                         MessageBox.Show("Błąd aktualizowania wykresu!", "Błąd", MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                     }
-                }
+            //}
             });
         }
 
@@ -196,59 +201,19 @@ namespace GUI
 
         static uint CalculateCRC(string data)
         {
-            using (var crc32 = new CRC32())
-            {
-                byte[] dataBytes = Encoding.UTF8.GetBytes(data);
-                return crc32.ComputeChecksum(dataBytes);
-            }
+            Crc32 crc32 = new Crc32();
+            byte[] bytes = Encoding.ASCII.GetBytes(data);
+            byte[] resultBytes = crc32.ComputeHash(bytes);
+            uint resultNum = BitConverter.ToUInt32(resultBytes, 0);
+
+            return resultNum;
         }
     }
-    public class CRC32 : IDisposable
+
+    class Crc32 : Crc32Base
     {
-        private uint[] _table;
-        private const uint Polynomial = 0xEDB88320;
-
-        public CRC32()
+        public Crc32() : base(0x04C11DB7, 0xFFFFFFFF, 0x00000000, false, true)
         {
-            _table = new uint[256];
-
-            uint temp = 0;
-
-            for (uint i = 0; i < 256; i++)
-            {
-                temp = i;
-
-                for (int j = 8; j > 0; j--)
-                {
-                    if ((temp & 1) == 1)
-                    {
-                        temp = (temp >> 1) ^ Polynomial;
-                    }
-                    else
-                    {
-                        temp >>= 1;
-                    }
-                }
-
-                _table[i] = temp;
-            }
-        }
-
-        public uint ComputeChecksum(byte[] bytes)
-        {
-            uint crc = 0xFFFFFFFF;
-
-            foreach (byte b in bytes)
-            {
-                crc = (crc >> 8) ^ _table[(crc ^ b) & 0xFF];
-            }
-
-            return ~crc;
-        }
-
-        public void Dispose()
-        {
-            _table = null;
         }
     }
 }
