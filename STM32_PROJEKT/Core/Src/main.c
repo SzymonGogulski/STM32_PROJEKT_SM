@@ -8,6 +8,8 @@
 #include "dma.h"
 #include "math.h"
 #include "arm_math.h"
+#include "rtc.h"
+
 // STD libs
 #include <string.h>
 #include <stdint.h>
@@ -27,21 +29,27 @@ unsigned int calculateCRC(char* data, uint32_t dataSize);
 
 // FUNKCJE I ZMIENNE ZEGAROWE
 extern TIM_HandleTypeDef htim4;
+extern RTC_HandleTypeDef hrtc;
 void MX_TIM_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 
 // ZMIENNE I FUNKCJE DO TRANSMISJI DANYCH
 void SendMessage(const char *message);
-#define SendBuffer_SIZE 20
+#define SendBuffer_SIZE 120
 char SendBuffer[SendBuffer_SIZE];
 
 // ZMIENNE I FUNKCJE ODBIERANIA DANYCH I ICH PRZETWARZANIA
-#define ReceiveBuffer_SIZE 64
-#define MainBuffer_SIZE 64
+#define ReceiveBuffer_SIZE 120
+#define MainBuffer_SIZE 120
 uint8_t ReceiveBuffer[ReceiveBuffer_SIZE];
 uint8_t MainBuffer[MainBuffer_SIZE];
 int ProcessDataFlag;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size);
+
+// RTC
+void MX_RTC_Init(void);
+RTC_TimeTypeDef time;
+RTC_DateTypeDef date;
 
 // POMIARY, NASTAWY I ZMIENNE REGULATORA
 typedef struct {
@@ -73,7 +81,6 @@ int main(void){
 	MX_DMA_Init();
 	MX_USART3_UART_Init();
 	MX_I2C1_Init();
-	MX_CRC_Init();
 
 	// Konfiguracja czujnika
 	SensorConfiguration();
@@ -96,11 +103,16 @@ int main(void){
 
 	// Odbieranie nastaw z GUI
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart3, ReceiveBuffer, ReceiveBuffer_SIZE);
-
 	// Inicjalizacja CRC
     HAL_CRC_Init(&hcrc);
+	MX_CRC_Init();
+	// Inicjalizacja RTC
+	MX_RTC_Init();
+    HAL_RTC_Init(&hrtc);
 
-	while(1){}
+
+	while(1){
+	}
 }
 
 // FUNKCJE UZYTKOWNIKA -----------------------------------------
@@ -115,6 +127,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 	// Dodaj 4.2) FILTR CYFROWY
 
 	if(htim->Instance == TIM4){
+		HAL_RTC_GetTime(&hrtc,  &time,  RTC_FORMAT_BIN);
+		HAL_RTC_GetDate(&hrtc,  &date,  RTC_FORMAT_BIN);
 
 		//Processing danych
 		if(ProcessDataFlag == 1){
@@ -158,7 +172,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		BMP280_Measure();
 
 		// Obliczanie CRC oraz wysyłanie pomiaru do terminala
-		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, Tref, (int)(U*100.0));
+		sprintf(SendBuffer, "[%d] %2.2f, %2.2f, %d;", time.Hours , Temperature, Tref, (int)(U*100.0));
 		// obliczenie CRC
 		calculateCRCValue = calculateCRC(SendBuffer, sizeof(SendBuffer));
 		sprintf(SendBuffer + strlen(SendBuffer), "CRC:%lu;\r\n", calculateCRCValue);
@@ -215,7 +229,8 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
 }
 
 void SendMessage(const char *message){
-
+//	HAL_RTC_GetTime(&hrtc, &time, RTC_FORMAT_BIN);
+//	HAL_RTC_GetDate(&hrtc, &date, RTC_FORMAT_BIN);
 	// Wysylanie wiadomosci do UART
 	if (HAL_UART_Transmit_IT(&huart3, (uint8_t*)message, strlen(message)) != HAL_OK) {
 		Error_Handler();
