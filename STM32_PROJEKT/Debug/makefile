@@ -60,8 +60,8 @@ all: main-build
 main-build: STM32_PROJEKT.elf secondary-outputs
 
 # Tool invocations
-STM32_PROJEKT.elf STM32_PROJEKT.map: $(OBJS) $(USER_OBJS) C:\Users\Alan\Desktop\STM32_PROJEKT_SM\STM32_PROJEKT\STM32F746ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "STM32_PROJEKT.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\Alan\Desktop\STM32_PROJEKT_SM\STM32_PROJEKT\STM32F746ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32_PROJEKT.map" -Wl,--gc-sections -static -L"C:\Users\Alan\STM32Cube\Repository\Packs\ARM\CMSIS\5.7.0\CMSIS\DSP\Lib\GCC" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
+STM32_PROJEKT.elf STM32_PROJEKT.map: $(OBJS) $(USER_OBJS) C:\Users\szymo\Desktop\PROJEKTY\STM32_PROJEKT_SM\STM32_PROJEKT\STM32F746ZGTX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "STM32_PROJEKT.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m7 -T"C:\Users\szymo\Desktop\PROJEKTY\STM32_PROJEKT_SM\STM32_PROJEKT\STM32F746ZGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="STM32_PROJEKT.map" -Wl,--gc-sections -static -L"C:\Users\szymo\STM32Cube\Repository\Packs\ARM\CMSIS\5.7.0\CMSIS\DSP\Lib\GCC" --specs=nano.specs -mfpu=fpv5-sp-d16 -mfloat-abi=hard -mthumb -u _printf_float -u _scanf_float -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

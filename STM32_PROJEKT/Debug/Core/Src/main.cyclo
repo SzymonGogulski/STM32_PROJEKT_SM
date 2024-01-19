@@ -8,4 +8,4 @@
 ../Core/Src/main.c:245:6:MX_TIM_Init	6
 ../Core/Src/main.c:289:6:SensorConfiguration	2
 ../Core/Src/main.c:302:6:SystemClock_Config	3
-../Core/Src/main.c:338:6:Error_Handler	1
+../Core/Src/main.c:340:6:Error_Handler	1
