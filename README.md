@@ -1,3 +1,4 @@
+**English version at the bottom.**
 # Projekt zaliczeniowy - Systemy Mikroprocesorowe
 ### Szymon Gogulski 147403 <br />Alan Grądecki 151126
 
@@ -116,3 +117,122 @@ BMP 280: https://github.com/ProjectoOfficial/STM32/tree/main/STM32_I2C
 FLASH: https://github.com/controllerstech/STM32/tree/master/FLASH_PROGRAM/F4%20SERIES
 
 
+
+___
+# Project Assignment - Microprocessor Systems
+### Szymon Gogulski 147403 <br />Alan Grądecki 151126
+
+The project involves the implementation of an automatic temperature control system using a ceramic heater as the controlled object.
+
+### Basic Assumptions
+- Periodic measurement of the measured value (Ts=500ms).
+- Control of the regulated variable in the range of 25°C - 75°C.
+- Utilization of the PID control algorithm.
+- Steady-state error below 5% of the control range.
+- Setting the reference value through serial communication.
+- Monitoring current values of the measurement, reference, and control signals.
+
+### Additional Assumptions
+- GUI Application.
+  - Communicates with STM through UART.
+  - Displays monitored signals.
+  - Sets controller parameters.
+  - Measures steady-state error.
+- Saving controller parameters to Flash memory.
+- Identification of the mathematical model of the object in Matlab.
+
+### Technologies Used
+- STM32
+- C
+- C#
+- Matlab
+- Python
+
+### Connection Photos
+![1](images/1.jpg)
+![2](images/2.jpg)
+
+### GUI Snapshot
+![GUI](images/GUI.png)
+
+### Regulation System Diagram
+![ControlDiagram](images/schematUAR.png)
+
+### Regulation Loop
+```
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
+
+	// TIMER INTERRUPT
+	// 1) MEASUREMENT
+	// 2) DIGITAL FILTER (not active)
+	// 3) SEND MEASUREMENT
+	// 4) PID CONTROL ALGORITHM
+
+	if(htim->Instance == TIM4){
+
+		// Measurement
+		BMP280_Measure();
+
+//		arm_biquad_cascade_df1_f32(&iir_filter, &Temperature, &TemperatureFiltered, 1);
+//		TemperatureFiltered = TemperatureFiltered * iir_gain;
+
+		// Send measurement to terminal
+		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, data.Tref, (int)(U*100.0)); //TemperatureFiltered
+		SendMessage(SendBuffer);
+
+		// Closed-loop control system with PID controller
+		// Regulation error
+		error = data.Tref - Temperature; //TempeartureFiltered
+		// Control signal from PID controller
+		R = arm_pid_f32(&PID, error);
+		U = R/10.0;
+		// Saturation of signal U
+		U = (U <= 1.0) ? U : 1.0;
+		U = (U >= 0.0) ? U : 0.0;
+		// Conversion of U to set_compare
+		set_comp = U * D_PWM;
+		// Set PWM duty cycle
+		__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, set_comp);
+	}
+}
+```
+
+### Electrical Diagram
+![SchematElektryczny](images/schematelektryczny.png)
+
+### List of Electrical Components
+- STM32 Nucleo F746ZG
+- BMP280 Sensor
+- Heater 3.6Ω; 40W
+- Power Supply 12V; 2.5A
+- N-MOSFET Transistor IRF520N
+- 2 x Resistor 100Ω
+- 2 x Resistor 10kΩ
+- Resistor 330Ω
+- LED R Diode
+- N-MOSFET Transistor 2N7000
+- 9V Battery
+
+### Possible Improvements
+
+**1. Time Base / Filter**
+	- Decrease the time base Ts.
+	- Implement a digital IIR filter for the measurement signal (for a smaller Ts).
+**2. RTC**
+	- Add Time Stamp for measurements using an RTC clock.
+	- Synchronize RTC using SNTP/NTP.
+	- Add a time display in the GUI.
+**3. CRC**
+	- Add a CRC checksum system in communication between STM and GUI.
+**4. UART Communication**
+	- Move UART measurement transmission from TIM interrupt to the main loop.
+	- Transmit 50 measurements in one batch instead of individually.
+**5. Flash**
+	- Improve writing to Flash memory.
+**6. Regulation**
+	- The significant initial overshooting is the biggest problem with our control system. <br/>It is necessary to find better PID parameters. It is possible that this is a characteristic feature <br/>of temperature control systems.
+
+### External Libraries
+CMSIS 5.7.0: https://www.keil.arm.com/packs/cmsis-arm/versions/
+BMP 280: https://github.com/ProjectoOfficial/STM32/tree/main/STM32_I2C
+FLASH: https://github.com/controllerstech/STM32/tree/master/FLASH_PROGRAM/F4%20SERIES
