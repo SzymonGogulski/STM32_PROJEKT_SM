@@ -10,8 +10,8 @@ sterowania użyliśmy grzałkę ceramiczną.
 - Sterowanie regulowaną zmienną w zakresie 25°C - 75°C.
 - Wykorzystanie algorytmu regulacji PID.
 - Uchyb ustalony poniżej 5% zakresu regulacji.
-- Zadawanie wartości referencyjnej poprzez kominukacje szeregową.
-- Podgląd aktualych wartości sygnału: pomiarowego, referencyjnego i sterującego.
+- Zadawanie wartości referencyjnej poprzez kominukację szeregową.
+- Podgląd aktualnych wartości sygnału: pomiarowego, referencyjnego i sterującego.
 
 ### Spełnione założenia dodatkowe
 - Aplikacja GUI
@@ -94,21 +94,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 - Bateria 9V
 
 ### Możliwe usprawnienia
-**1. Podstawa czasu/ Filtr**
-    - Zmniejszyć podstawe czasową Ts.
+1. **Podstawa czasu/ Filtr**
+    - Zmniejszyć podstawę czasową Ts.
     - Zrealizować filtr cyfrowy IIR sygnału pomiarowego (dla mniejszego Ts).
-**2. RTC**
+2. **RTC**
     - Dodać Time Stamp pomiarów poprzez zegar RTC.
     - Dodać synchronizacje RTC poprzez SNTP/NTP.
     - Dodać okienko czas pomiaru w GUI.
-**3. CRC**
+3. **CRC**
     - Dodać system sum kontrolnych CRC w komunikacji pomiędzy STM i GUI.
-**4. Komunikacja UART**
+4. **Komunikacja UART**
     - Przenieść wysyłanie pomiarów UART z przerwania TIM do pętli głównej.
-    - Wysyłać 50 pomiarów w jednej paczce zamiast każdy pojedyńczo.
-**5. Flash**
+    - Wysyłać 50 pomiarów w jednej paczce zamiast każdy pojedynczo.
+5. **Flash**
     - Usprawnić zapis do pamięci Flash.
-**6. Regulacja**
+6. **Regulacja**
     - Największym problemem naszego układu regulacji jest znaczne początkowe przeregulowanie. <br/>Konieczne jest znalezienie lepszych nastaw PID. Możliwe, że jest to cecha charakterystyczna <br/> układów regulacji temperatury.
     
 ### Zewnętrze biblioteki
