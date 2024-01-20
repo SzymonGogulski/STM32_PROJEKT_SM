@@ -156,7 +156,7 @@ The project involves the implementation of an automatic temperature control syst
 ![GUI](images/GUI.png)
 
 ### Regulation System Diagram
-![ControlDiagram](images/schematUAR.png)
+![ControlDiagram](images/UAR_en.png)
 
 ### Regulation Loop
 ```
@@ -215,21 +215,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 ### Possible Improvements
 
-**1. Time Base / Filter**
+1. **Time Base / Filter**
 	- Decrease the time base Ts.
 	- Implement a digital IIR filter for the measurement signal (for a smaller Ts).
-**2. RTC**
+2. **RTC**
 	- Add Time Stamp for measurements using an RTC clock.
 	- Synchronize RTC using SNTP/NTP.
 	- Add a time display in the GUI.
-**3. CRC**
+3. **CRC**
 	- Add a CRC checksum system in communication between STM and GUI.
-**4. UART Communication**
+4. **UART Communication**
 	- Move UART measurement transmission from TIM interrupt to the main loop.
 	- Transmit 50 measurements in one batch instead of individually.
-**5. Flash**
+5. **Flash**
 	- Improve writing to Flash memory.
-**6. Regulation**
+6. **Regulation**
 	- The significant initial overshooting is the biggest problem with our control system. <br/>It is necessary to find better PID parameters. It is possible that this is a characteristic feature <br/>of temperature control systems.
 
 ### External Libraries
