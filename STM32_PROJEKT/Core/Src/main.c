@@ -14,6 +14,8 @@
 #include <stdlib.h>
 // USER libs
 #include "BMP280_STM32.h"
+#include "FLASH_SECTOR.h"
+#include "stdint.h"
 
 // FUNKCJE SYSTEMOWE
 void SystemClock_Config(void);
@@ -46,17 +48,46 @@ typedef struct {
     float Ki;
     float Kd;
 } Settings;
-void InitializeSettings(Settings *data);
-void SaveSettings(Settings *data);
 Settings data;
 arm_pid_instance_f32 PID;
 float Temperature, Pressure, Humidity;
-float Tref;
+//float Tref;
 float error;
 float32_t R;
 float U;
 int set_comp;
 const int D_PWM = 1250;
+
+// OBSLUGA PAMIECI FLASH
+void InitializeSettings(Settings *data);
+void SaveSettings(Settings *data);
+uint32_t SettingsAddress = 0x08080000;
+
+// FILTR CYFROWY DOLNPORZEPUSTOWY 10HZ
+// PARAMETRY FILTRÓW
+//gain and SOS matrix:
+//    0.0676
+//
+//    1.0000    0.9922         0    1.0000    0.2310         0
+//    1.0000    2.0144    1.0144    1.0000    0.4847    0.1051
+//    1.0000    2.0034    1.0034    1.0000    0.5621    0.2818
+//    1.0000    1.9901    0.9901    1.0000    0.7309    0.6667
+//{1.0000,0.9922,0,-0.2310,0,
+//1.0000,2.0144,1.0144,-0.4847,-0.1051,
+//1.0000,2.0034,1.0034,-0.5621,-0.2818,
+//1.0000,1.9901,0.9901,-0.7309,-0.6667};
+// IIR
+//float32_t iir_coeffs[] = {	1.0000,	0.9922,	0,		-0.2310,	0,
+//							1.0000,	2.0144,	1.0144,	-0.4847,	-0.1051,
+//							1.0000,	2.0034,	1.0034,	-0.5621,	-0.2818,
+//							1.0000,	1.9901,	0.9901,	-0.7309,	-0.6667};
+//float32_t iir_state[16] = {0};
+//float32_t iir_gain = 0.0676;
+//arm_biquad_casd_df1_inst_f32 iir_filter = {.numStages=4, .pState=iir_state, .pCoeffs=iir_coeffs};
+//
+//float TemperatureFiltered; // WYJŚCIE FILTRU IIR
+
+
 
 int main(void){
 	// Inicjalizacja peryferiów
@@ -70,6 +101,16 @@ int main(void){
 	// Konfiguracja czujnika
 	SensorConfiguration();
 
+	// Inicjalizacja regulatora PID i zmiennych
+	// Wczytanie poprzednich nastaw z FLASH
+
+
+	InitializeSettings(&data);
+	PID.Kp = data.Kp;
+	PID.Ki = data.Ki;
+	PID.Kd = data.Kd;
+	arm_pid_init_f32(&PID, 1);
+
 	// Inicjalizacja tim4
 	MX_TIM_Init();
 	HAL_TIM_Base_Start_IT(&htim4);
@@ -78,61 +119,62 @@ int main(void){
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
 	__HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_1, 0);
 
-	// Inicjalizacja regulatora PID i zmiennych
-	InitializeSettings(&data);
-	Tref = data.Tref;
-	PID.Kp = data.Kp;
-	PID.Ki = data.Ki;
-	PID.Kd = data.Kd;
-	arm_pid_init_f32(&PID, 1);
-
 	// Odbieranie nastaw z GUI
 	HAL_UARTEx_ReceiveToIdle_DMA(&huart3, ReceiveBuffer, ReceiveBuffer_SIZE);
 
-	while(1){}
+	while(1){
+		//Processing danych
+		if(ProcessDataFlag == 1){
+
+			// tfloat;
+			if (MainBuffer[0] == 't') {
+				float tempT;
+				sscanf((char*)&MainBuffer[1], "%f;", &tempT);
+				if (tempT >= 25.0 && tempT <= 75.0){
+					data.Tref = tempT;
+					SaveSettings(&data);
+				}
+			}
+			// pfloat,float,float;
+			else if (MainBuffer[0] == 'p') {
+				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &data.Kp, &data.Ki, &data.Kd);
+				PID.Kp = data.Kp;
+				PID.Ki = data.Ki;
+				PID.Kd = data.Kd;
+				PID.A0 = PID.Kp + PID.Ki + PID.Kd;
+				PID.A1 = -PID.Kp - 2.0*PID.Kd;
+				PID.A2 = PID.Kd;
+				arm_pid_init_f32(&PID, 0);
+				SaveSettings(&data);
+			}
+			ProcessDataFlag = 0;
+		}}
 }
 
 // FUNKCJE UZYTKOWNIKA -----------------------------------------
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 	// PRZERWANIE ZEGARA
-	// 1) PRZETWORZENIE DANYCH UART
-	// Dodaj 1.2) ZAPISANIE NOWYCH NASTAW DO EPROM
-	// 2) POMIAR
+	// 1) POMIAR
+	// 2) FILTR CYFROWY
 	// 3) WYSLANIE POMIARU
 	// 4) ALGORYM REGULACJI PID
-	// Dodaj 4.2) FILTR CYFROWY
 
 	if(htim->Instance == TIM4){
-
-		//Processing danych
-		if(ProcessDataFlag == 1){
-
-			// tfloat;
-			if (MainBuffer[0] == 't') {
-				sscanf((char*)&MainBuffer[1], "%f;", &Tref);
-			}
-			// pfloat,float,float;
-			else if (MainBuffer[0] == 'p') {
-				sscanf((char*)&MainBuffer[1], "%f,%f,%f;", &PID.Kp, &PID.Ki, &PID.Kd);
-				PID.A0 = PID.Kp + PID.Ki + PID.Kd;
-				PID.A1 = -PID.Kp - 2.0*PID.Kd;
-				PID.A2 = PID.Kd;
-				arm_pid_init_f32(&PID, 0);
-			}
-			ProcessDataFlag = 0;
-		}
 
 		// Pomiar
 		BMP280_Measure();
 
+//		arm_biquad_cascade_df1_f32(&iir_filter, &Temperature, &TemperatureFiltered, 1);
+//		TemperatureFiltered = TemperatureFiltered * iir_gain;
+
 		// Wyslij pomiar do terminala
-		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, Tref, (int)(U*100.0));
+		sprintf(SendBuffer, "%2.2f, %2.2f, %d;\r\n", Temperature, data.Tref, (int)(U*100.0)); //TemperatureFiltered
 		SendMessage(SendBuffer);
 
 		// Zamkniety uklad regulacji z regulatorem PID
 		//Uchyb regulacji
-		error = Tref - Temperature;
+		error = data.Tref - Temperature; //TempeartureFiltered
 		// sygnal sterujacy z regulatora
 		R = arm_pid_f32(&PID, error);
 		U = R/10.0;
@@ -148,18 +190,49 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 void InitializeSettings(Settings *data) {
 
-	// Wczytanie ustawien zapisanych w EEPROM
+	float tempTref;
+	float tempKp;
+	float tempKi;
+	float tempKd;
 
-	// Inicjalizacja ustawien domyslnych
-    data->Tref = 25.0;
-    data->Kp = 1.0;
-    data->Ki = 0.0;
-    data->Kd = 0.0;
+	// Wczytanie ustawien zapisanych w FLASH
+	tempTref = Flash_Read_NUM(SettingsAddress);
+	tempKp = Flash_Read_NUM(SettingsAddress + 4);
+	tempKi = Flash_Read_NUM(SettingsAddress + 8);
+	tempKd = Flash_Read_NUM(SettingsAddress + 12);
+
+
+    // Sprawdzenie czy wczytane ustawienia są poprawne
+    if (tempTref < 25.0 || tempTref > 75.0 ||
+    		tempKp < 0.0 || tempKp > 1000.0 ||
+			tempKi < 0.0 || tempKi > 1000.0 ||
+			tempKd < 0.0 || tempKd > 1000.0)
+    {
+    	// jeżeli ustawienia są niepoprawne to:
+    	//Inicjalizacja ustawien domyslnych
+        data->Tref = 25.0;
+        data->Kp = 1.0;
+        data->Ki = 0.0;
+        data->Kd = 0.0;
+
+        // Zapisanie ustawien domyslnych
+    	float floatArray[4] = {25.0, 1.0, 0.0, 0.0};
+    	Flash_Write_NUM(0x08080000, floatArray);
+    }
+    else{
+    	// Wczytanie poprawynych danych do zmiennych
+        data->Tref = tempTref;
+        data->Kp = tempKp;
+        data->Ki = tempKi;
+        data->Kd = tempKd;
+    }
+
 }
 
 void SaveSettings(Settings *data){
 
-	// Zapisywanie danych do EEPROM
+	float floatArray[4] = {data->Tref, data->Kp, data->Ki, data->Kd};
+	Flash_Write_NUM(0x08080000, floatArray);
 }
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size){
@@ -191,6 +264,9 @@ void SendMessage(const char *message){
 void MX_TIM_Init(void){
 
 	// Redefinicja funkcji bibliotecznej MX_TIM4_Init(); Okres PWM = 500ms
+	// 719 -> 100ms
+	// 539 -> 75ms
+	// 3599 -> 500ms
 	TIM_ClockConfigTypeDef sClockSourceConfig = {0};
 	TIM_MasterConfigTypeDef sMasterConfig = {0};
 	TIM_OC_InitTypeDef sConfigOC = {0};
