@@ -57,6 +57,7 @@ float32_t R;
 float U;
 int set_comp;
 const int D_PWM = 1250;
+// Optymalne nastawy Kp:2.23, Ki:0.04, Kd:0.12
 
 // OBSLUGA PAMIECI FLASH
 void InitializeSettings(Settings *data);
@@ -156,7 +157,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 	// PRZERWANIE ZEGARA
 	// 1) POMIAR
-	// 2) FILTR CYFROWY
+	// 2) FILTR CYFROWY (nie aktywny)
 	// 3) WYSLANIE POMIARU
 	// 4) ALGORYM REGULACJI PID
 
@@ -177,7 +178,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 		error = data.Tref - Temperature; //TempeartureFiltered
 		// sygnal sterujacy z regulatora
 		R = arm_pid_f32(&PID, error);
-		U = R/10.0;
+		U = R/50.0;
 		// Saturacja sygnalu U
 		U = (U <= 1.0) ? U : 1.0;
 		U = (U >= 0.0) ? U : 0.0;
