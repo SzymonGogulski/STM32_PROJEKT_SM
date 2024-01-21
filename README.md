@@ -113,7 +113,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
     
 ### Zewnętrze biblioteki
 CMSIS 5.7.0: https://www.keil.arm.com/packs/cmsis-arm/versions/<br />
-BMP 280: https://github.com/ProjectoOfficial/STM32/tree/main/<br />STM32_I2C
+BMP 280: https://github.com/ProjectoOfficial/STM32/tree/main/STM32_I2C<br />
 FLASH: https://github.com/controllerstech/STM32/tree/master/FLASH_PROGRAM/F4%20SERIES
 
 
@@ -234,5 +234,5 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim){
 
 ### External Libraries
 CMSIS 5.7.0: https://www.keil.arm.com/packs/cmsis-arm/versions/
-<br />BMP 280: https://github.com/ProjectoOfficial/STM32/tree/main/<br />STM32_I2C
+<br />BMP 280: https://github.com/ProjectoOfficial/STM32/tree/main/STM32_I2C<br />
 FLASH: https://github.com/controllerstech/STM32/tree/master/FLASH_PROGRAM/F4%20SERIES
